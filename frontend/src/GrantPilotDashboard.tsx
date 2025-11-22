@@ -3,6 +3,7 @@ import { Search, Filter, Sparkles } from "lucide-react";
 import { grantsApi } from "./api/grants";
 import { Grant } from "./data/grants";
 import { AgentChat } from "./components/AgentChat";
+import { ConnectWallet } from "./components/ConnectWallet";
 
 const statusColors: Record<string, string> = {
   Open: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40",
@@ -346,9 +347,7 @@ export default function GrantPilotDashboard() {
               <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" />
               Live grant intel
             </span>
-            <button className="px-6 py-1.5 bg-[#FFB000] text-black rounded-full hover:bg-[#e6a000]">
-              Connect Wallet
-            </button>
+            <ConnectWallet />
           </div>
         </header>
 
