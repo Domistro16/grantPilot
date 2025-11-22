@@ -1,0 +1,25 @@
+DEADLINE ALERT
+==============
+
+⏰ {{daysLeft}} remaining
+
+This is a friendly reminder that the deadline for the following grant is approaching:
+
+{{grantTitle}}
+
+Grant Details:
+--------------
+Chain: {{grantChain}}
+Amount: {{grantAmount}}
+Deadline: {{grantDeadline}}
+Eligibility: {{grantEligibility}}
+
+⚠️ ACTION REQUIRED: Don't miss out! Make sure to submit your application before the deadline.
+
+Apply Now: {{grantUrl}}
+
+Good luck with your application! 🚀
+
+---
+You're receiving this email because you subscribed to updates for this grant.
+Unsubscribe: {{unsubscribeUrl}}

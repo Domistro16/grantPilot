@@ -1,0 +1,27 @@
+GRANT UPDATED
+=============
+
+The following grant you're subscribed to has been updated:
+
+{{grantTitle}}
+Chain: {{grantChain}}
+
+WHAT CHANGED
+------------
+{{changeType}}
+
+Previous: {{oldValue}}
+Updated:  {{newValue}}
+
+CURRENT GRANT DETAILS
+---------------------
+Amount: {{grantAmount}}
+Deadline: {{grantDeadline}}
+Status: {{grantStatus}}
+Eligibility: {{grantEligibility}}
+
+View Updated Grant: {{grantUrl}}
+
+---
+You're receiving this email because you subscribed to updates for this grant.
+Unsubscribe: {{unsubscribeUrl}}

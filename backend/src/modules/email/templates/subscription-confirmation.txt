@@ -1,0 +1,24 @@
+SUBSCRIPTION CONFIRMED
+=====================
+
+You're now subscribed to updates for:
+
+{{grantTitle}}
+
+Grant Details:
+--------------
+Chain: {{grantChain}}
+Amount: {{grantAmount}}
+Deadline: {{grantDeadline}}
+Status: {{grantStatus}}
+
+We'll notify you when:
+- The deadline is approaching (7 days and 1 day before)
+- Grant details are updated
+- The grant status changes
+
+View Grant Details: {{grantUrl}}
+
+---
+You're receiving this email because you subscribed to grant updates on GrantPilot.
+Unsubscribe: {{unsubscribeUrl}}
