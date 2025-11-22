@@ -439,6 +439,11 @@ Return ONLY valid JSON. No markdown, no explanations.`;
           tag: grantData.tag,
           category: grantData.category,
           source_url: sourceUrl,
+          // Preserve existing fit/time data or set to null if not present
+          fit_score: existing.fit_score || null,
+          fit_description: existing.fit_description || null,
+          time_to_apply: existing.time_to_apply || null,
+          time_to_apply_description: existing.time_to_apply_description || null,
         });
         this.logger.debug(`Updated grant: ${grantData.title}`);
       }
@@ -462,6 +467,11 @@ Return ONLY valid JSON. No markdown, no explanations.`;
         focus: grantData.focus,
         link: grantData.link || sourceUrl,
         source_url: sourceUrl,
+        // Initialize new fields to null (can be populated later)
+        fit_score: null,
+        fit_description: null,
+        time_to_apply: null,
+        time_to_apply_description: null,
       });
       this.logger.debug(`Added new grant: ${grantData.title}`);
 
