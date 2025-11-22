@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Grant, statusColors } from "../data/grants";
 import { grantsApi } from "../api/grants";
+import { scraperApi, ScrapeResult, GrantSource } from "../api/scraper";
 
 const AdminDashboard: React.FC = () => {
   const [grants, setGrants] = useState<Grant[]>([]);
@@ -11,9 +12,16 @@ const AdminDashboard: React.FC = () => {
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Scraper state
+  const [scraping, setScraping] = useState(false);
+  const [scrapeResult, setScrapeResult] = useState<ScrapeResult | null>(null);
+  const [sources, setSources] = useState<GrantSource[]>([]);
+  const [showSources, setShowSources] = useState(false);
+
   // Fetch grants on mount
   useEffect(() => {
     loadGrants();
+    loadSources();
   }, []);
 
   const loadGrants = async () => {
@@ -120,6 +128,34 @@ const AdminDashboard: React.FC = () => {
     setEditing((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
+  // Scraper functions
+  const loadSources = async () => {
+    try {
+      const data = await scraperApi.getSources();
+      setSources(data);
+    } catch (err) {
+      console.error("Error loading sources:", err);
+    }
+  };
+
+  const runScraper = async () => {
+    try {
+      setScraping(true);
+      setError(null);
+      setScrapeResult(null);
+      const result = await scraperApi.runScraper();
+      setScrapeResult(result);
+      // Reload grants to show new data
+      await loadGrants();
+      await loadSources();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to run scraper");
+      console.error("Error running scraper:", err);
+    } finally {
+      setScraping(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-[#050816] text-gray-100 flex items-center justify-center">
@@ -163,6 +199,137 @@ const AdminDashboard: React.FC = () => {
             </button>
           </div>
         )}
+
+        {/* Scraper Control Panel */}
+        <section className="rounded-2xl bg-black/40 border border-white/10 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wide">Web Scraper</p>
+              <h2 className="text-sm font-semibold text-gray-100">Grant Data Collection</h2>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                Scrape {sources.filter(s => s.is_active).length} active grant sources from blockchain ecosystems
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowSources(!showSources)}
+                className="px-3 py-1.5 rounded-lg border border-white/20 text-[11px] text-gray-100 hover:bg-white/10"
+              >
+                {showSources ? 'Hide' : 'View'} Sources
+              </button>
+              <button
+                onClick={runScraper}
+                disabled={scraping}
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold ${
+                  scraping
+                    ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                    : 'bg-emerald-500 text-black hover:bg-emerald-400'
+                } shadow-md`}
+              >
+                {scraping ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-black"></span>
+                    Scraping...
+                  </span>
+                ) : (
+                  '🔄 Run Scraper'
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Scrape Result */}
+          {scrapeResult && (
+            <div className="mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3">
+              <p className="text-[11px] font-semibold text-emerald-300 mb-2">✓ Scrape completed</p>
+              <div className="grid grid-cols-3 gap-3 text-[11px]">
+                <div>
+                  <p className="text-gray-400">Sources Scraped</p>
+                  <p className="text-sm font-semibold text-gray-100">{scrapeResult.sources_scraped}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Grants Added</p>
+                  <p className="text-sm font-semibold text-emerald-300">{scrapeResult.grants_added}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Grants Updated</p>
+                  <p className="text-sm font-semibold text-amber-300">{scrapeResult.grants_updated}</p>
+                </div>
+              </div>
+              {scrapeResult.errors.length > 0 && (
+                <details className="mt-3">
+                  <summary className="text-[10px] text-rose-300 cursor-pointer hover:text-rose-200">
+                    {scrapeResult.errors.length} error(s) occurred - click to view
+                  </summary>
+                  <ul className="mt-2 space-y-1 text-[10px] text-rose-200 max-h-32 overflow-y-auto">
+                    {scrapeResult.errors.map((err, i) => (
+                      <li key={i} className="pl-2 border-l border-rose-500/30">
+                        {err}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          )}
+
+          {/* Grant Sources Table */}
+          {showSources && (
+            <div className="rounded-xl bg-white/5 border border-white/10 p-3 overflow-x-auto">
+              <p className="text-[11px] font-semibold text-gray-300 mb-2">Grant Sources ({sources.length})</p>
+              <table className="w-full text-left text-[11px]">
+                <thead className="text-[10px] uppercase tracking-wide text-gray-400 border-b border-white/10">
+                  <tr>
+                    <th className="py-2 pr-3">Source</th>
+                    <th className="py-2 pr-3">Chain</th>
+                    <th className="py-2 pr-3">Strategy</th>
+                    <th className="py-2 pr-3">Status</th>
+                    <th className="py-2 pr-3">Last Scraped</th>
+                    <th className="py-2 pr-3">Failures</th>
+                  </tr>
+                </thead>
+                <tbody className="align-top">
+                  {sources.map((source) => (
+                    <tr key={source.id} className="border-b border-white/5 last:border-none">
+                      <td className="py-2 pr-3 font-medium text-gray-100 max-w-[180px] truncate">
+                        {source.name}
+                      </td>
+                      <td className="py-2 pr-3 text-gray-300">{source.chain_name}</td>
+                      <td className="py-2 pr-3">
+                        <span className="px-2 py-0.5 rounded-full bg-white/5 text-[10px] text-gray-300">
+                          {source.scrape_strategy}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-3">
+                        {source.is_active ? (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 text-[10px]">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full bg-gray-500/10 text-gray-400 text-[10px]">
+                            Inactive
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-3 text-gray-400">
+                        {source.last_scraped_at
+                          ? new Date(source.last_scraped_at).toLocaleString()
+                          : 'Never'}
+                      </td>
+                      <td className="py-2 pr-3">
+                        {source.consecutive_failures > 0 ? (
+                          <span className="text-rose-300">{source.consecutive_failures}</span>
+                        ) : (
+                          <span className="text-gray-500">0</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
         <section className="rounded-2xl bg-black/40 border border-white/10 p-4 overflow-x-auto">
           <table className="w-full text-left text-xs">
