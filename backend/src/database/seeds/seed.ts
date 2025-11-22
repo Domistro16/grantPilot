@@ -1,7 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Chain } from '../../modules/chains/entities/chain.entity';
 import { Category } from '../../modules/categories/entities/category.entity';
-import { Grant, GrantStatus } from '../../modules/grants/entities/grant.entity';
 import { seedGrantSources } from './grant-sources.seed';
 
 export async function runSeeds(dataSource: DataSource) {
@@ -141,99 +140,9 @@ export async function runSeeds(dataSource: DataSource) {
     }
   }
 
-  // Seed Sample Grants
-  const grantRepository = dataSource.getRepository(Grant);
-  const sampleGrants = [
-    {
-      chain: 'BNB Chain',
-      category: 'Infra',
-      title: 'BNB Chain Builder Grants',
-      tag: 'Infra · DeFi · Tooling',
-      amount: 'Up to $150k',
-      status: GrantStatus.OPEN,
-      deadline: 'Rolling',
-      summary:
-        'BNB Chain provides grants to developers building infrastructure, DeFi protocols, and developer tooling on the BNB Chain ecosystem.',
-      focus:
-        'Teams building scalable infrastructure, cross-chain bridges, or innovative DeFi protocols that enhance the BNB Chain ecosystem.',
-      link: 'https://www.bnbchain.org/en/blog/bnb-chain-grants-program',
-      source_url: 'https://www.bnbchain.org/en/blog/bnb-chain-grants-program',
-    },
-    {
-      chain: 'Solana',
-      category: 'DeFi',
-      title: 'Solana Foundation Grants',
-      tag: 'DeFi · Gaming · Consumer',
-      amount: '$5k - $50k',
-      status: GrantStatus.OPEN,
-      deadline: 'Rolling',
-      summary:
-        'Solana Foundation supports projects building on Solana across DeFi, gaming, consumer apps, and infrastructure.',
-      focus:
-        'Early-stage projects with strong technical teams building innovative applications on Solana.',
-      link: 'https://solana.org/grants',
-      source_url: 'https://solana.org/grants',
-    },
-    {
-      chain: 'Ethereum / L2s',
-      category: 'Public Goods',
-      title: 'Ethereum Foundation ESP Grants',
-      tag: 'Public Goods · Infra · Tooling',
-      amount: 'Varies by track',
-      status: GrantStatus.OPEN,
-      deadline: 'Rolling',
-      summary:
-        'The Ethereum Ecosystem Support Program provides grants for projects that strengthen Ethereum and its ecosystem, with focus on public goods.',
-      focus:
-        'Projects improving Ethereum developer experience, client diversity, security research, and community education.',
-      link: 'https://esp.ethereum.foundation/',
-      source_url: 'https://esp.ethereum.foundation/',
-    },
-    {
-      chain: 'Base',
-      category: 'Consumer',
-      title: 'Base Builders Program',
-      tag: 'Consumer · DeFi · Gaming',
-      amount: 'Up to $100k',
-      status: GrantStatus.UPCOMING,
-      deadline: 'Q1 2026 (est.)',
-      summary:
-        'Base is seeking builders creating consumer applications, DeFi protocols, and games that bring the next billion users onchain.',
-      focus:
-        'Teams with proven track records building accessible, user-friendly applications on Base.',
-      link: 'https://paragraph.xyz/@base/calling-based-builders',
-      source_url: 'https://paragraph.xyz/@base/calling-based-builders',
-    },
-    {
-      chain: 'Polygon',
-      category: 'Ecosystem',
-      title: 'Polygon Village Grants',
-      tag: 'Ecosystem · Gaming · DeFi',
-      amount: '$10k - $250k',
-      status: GrantStatus.OPEN,
-      deadline: 'Dec 30, 2025',
-      summary:
-        'Polygon Village provides funding for projects building on Polygon, with emphasis on gaming, DeFi, and ecosystem tools.',
-      focus:
-        'Established teams with clear roadmaps and strong potential for ecosystem growth.',
-      link: 'https://polygon.technology/village/grants',
-      source_url: 'https://polygon.technology/village/grants',
-    },
-  ];
-
-  for (const grantData of sampleGrants) {
-    const existing = await grantRepository.findOne({
-      where: { title: grantData.title, link: grantData.link },
-    });
-    if (!existing) {
-      const grant = grantRepository.create(grantData);
-      await grantRepository.save(grant);
-      console.log(`✅ Created grant: ${grantData.title}`);
-    }
-  }
-
   // Seed Grant Sources
   await seedGrantSources(dataSource);
 
   console.log('✨ Database seeding completed!');
+  console.log('📝 Note: No sample grants seeded. Run POST /api/scraper/run to fetch real grant data.');
 }
