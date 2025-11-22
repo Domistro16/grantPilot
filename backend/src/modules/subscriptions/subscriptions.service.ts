@@ -79,7 +79,7 @@ export class SubscriptionsService {
       await this.emailService.sendSubscriptionConfirmation(
         subscription.user_email,
         grant,
-        subscription.unsubscribe_token,
+        subscription.unsubscribe_token!,
       );
     } catch (error) {
       this.logger.error('Failed to send confirmation email:', error);
