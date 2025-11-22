@@ -222,8 +222,9 @@ export class EmailService {
 
       this.logger.log(`Email sent via SMTP: ${info.messageId}`);
     } catch (error) {
-      this.logger.error('Failed to send email via SMTP:', error);
-      throw error;
+      this.logger.error('Failed to send email via SMTP:', error.message || error);
+      this.logger.warn('Falling back to console output...');
+      this.sendViaConsole(options);
     }
   }
 
