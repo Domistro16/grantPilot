@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
@@ -15,6 +16,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { AiModule } from './modules/ai/ai.module';
 import { ScraperModule } from './modules/scraper/scraper.module';
 import { AgentModule } from './modules/agent/agent.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -45,6 +47,9 @@ import { AgentModule } from './modules/agent/agent.module';
       }),
     }),
 
+    // Cron jobs
+    ScheduleModule.forRoot(),
+
     // Feature modules
     GrantsModule,
     ChainsModule,
@@ -53,6 +58,7 @@ import { AgentModule } from './modules/agent/agent.module';
     AiModule,
     ScraperModule,
     AgentModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
