@@ -21,6 +21,10 @@ interface ExtractedGrant {
   summary: string;
   focus: string;
   link: string;
+  fit_score?: string;
+  fit_description?: string;
+  time_to_apply?: string;
+  time_to_apply_description?: string;
 }
 
 export interface ScrapeResult {
@@ -355,8 +359,16 @@ For EACH grant program mentioned, return a JSON object with these exact fields:
   "deadline": "specific date like 'Dec 30, 2025' or 'Rolling' or 'Q1 2026'",
   "summary": "2-3 sentences describing what the grant supports",
   "focus": "1-2 sentences on ideal applicant profile/requirements",
-  "link": "${sourceUrl}"
+  "link": "${sourceUrl}",
+  "fit_score": "OPTIONAL - short assessment like 'Strong for DeFi builders' or 'Good for early-stage teams' or 'Ideal for infrastructure projects'",
+  "fit_description": "OPTIONAL - 1 sentence explaining who this grant is best suited for",
+  "time_to_apply": "OPTIONAL - estimated time like '30-45 minutes' or '2-3 hours' or '1-2 weeks'",
+  "time_to_apply_description": "OPTIONAL - 1 sentence about what's needed (e.g., 'Requires pitch deck and metrics' or 'Simple online form')"
 }
+
+IMPORTANT: The fit_score, fit_description, time_to_apply, and time_to_apply_description fields are OPTIONAL.
+Only include them if you can make a reasonable estimate based on the grant requirements and application process described in the content.
+If the information is not available, omit these fields from the JSON.
 
 If multiple grants exist on this page, return an array of JSON objects: [grant1, grant2, ...]
 If no grant information is found, return: { "error": "No grant data found" }
@@ -439,11 +451,11 @@ Return ONLY valid JSON. No markdown, no explanations.`;
           tag: grantData.tag,
           category: grantData.category,
           source_url: sourceUrl,
-          // Preserve existing fit/time data or set to null if not present
-          fit_score: existing.fit_score || null,
-          fit_description: existing.fit_description || null,
-          time_to_apply: existing.time_to_apply || null,
-          time_to_apply_description: existing.time_to_apply_description || null,
+          // Use extracted values, fallback to existing, then null
+          fit_score: grantData.fit_score || existing.fit_score || null,
+          fit_description: grantData.fit_description || existing.fit_description || null,
+          time_to_apply: grantData.time_to_apply || existing.time_to_apply || null,
+          time_to_apply_description: grantData.time_to_apply_description || existing.time_to_apply_description || null,
         });
         this.logger.debug(`Updated grant: ${grantData.title}`);
       }
@@ -467,11 +479,11 @@ Return ONLY valid JSON. No markdown, no explanations.`;
         focus: grantData.focus,
         link: grantData.link || sourceUrl,
         source_url: sourceUrl,
-        // Initialize new fields to null (can be populated later)
-        fit_score: null,
-        fit_description: null,
-        time_to_apply: null,
-        time_to_apply_description: null,
+        // Use extracted values from GPT-4, or null if not provided
+        fit_score: grantData.fit_score || null,
+        fit_description: grantData.fit_description || null,
+        time_to_apply: grantData.time_to_apply || null,
+        time_to_apply_description: grantData.time_to_apply_description || null,
       });
       this.logger.debug(`Added new grant: ${grantData.title}`);
 
