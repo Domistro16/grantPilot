@@ -28,8 +28,14 @@ export class AiService {
 - deadline: Exact date or 'Rolling' or estimated quarter
 - summary: 2-3 sentence summary of what the grant supports
 - focus: 1-2 sentences on ideal applicant profile
+- fit_score: (OPTIONAL) Short assessment like 'Strong for DeFi builders' or 'Good for early-stage teams' or 'Ideal for infrastructure projects'
+- fit_description: (OPTIONAL) 1 sentence explaining who this grant is best suited for
+- time_to_apply: (OPTIONAL) Estimated time like '30-45 minutes' or '2-3 hours' or '1-2 weeks'
+- time_to_apply_description: (OPTIONAL) 1 sentence about what's needed (e.g., 'Requires pitch deck and metrics' or 'Simple online form')
 
-Return ONLY valid JSON with these exact keys. No markdown, no explanation.
+IMPORTANT: fit_score, fit_description, time_to_apply, and time_to_apply_description are OPTIONAL. Only include them if you can make a reasonable estimate based on the grant requirements and application process described in the content.
+
+Return ONLY valid JSON with these keys. No markdown, no explanation.
 
 ${content}`;
 
