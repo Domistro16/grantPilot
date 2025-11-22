@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Filter, Sparkles } from "lucide-react";
 import { grantsApi } from "./api/grants";
 import { Grant } from "./data/grants";
+import { AgentChat } from "./components/AgentChat";
 
 const statusColors: Record<string, string> = {
   Open: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40",
@@ -182,44 +183,6 @@ export default function GrantPilotDashboard() {
     }
   };
 
-  const AgentContent: React.FC = () => (
-    <>
-      <div className="rounded-xl border border-white/10 bg-black/40 p-3 space-y-3 text-[11px] text-gray-200 overflow-y-auto max-h-[50vh] lg:max-h-none">
-        <div className="bg-white/5 border border-white/10 rounded-2xl px-3 py-2 max-w-[90%]">
-          <p>Tell me what you're building and I'll map it to realistic grant paths.</p>
-        </div>
-        {selected && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl px-3 py-2 max-w-[90%]">
-            <p className="text-gray-300 mb-1">For this {selected.chain} program, consider:</p>
-            <ul className="list-disc list-inside text-gray-300 space-y-0.5">
-              <li>Your traction with dashboards and agents.</li>
-              <li>Why this should live on {selected.chain}.</li>
-              <li>How funds map to milestones.</li>
-            </ul>
-          </div>
-        )}
-        <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-2xl px-3 py-2 max-w-[90%]">
-          <p className="text-emerald-200 text-[11px] font-semibold mb-0.5">Coming soon</p>
-          <p className="text-emerald-100/90 text-[11px]">
-            Connect your deck + Notion once and auto-draft answers for every grant you click.
-          </p>
-        </div>
-      </div>
-      <div className="mt-3 bg-black/70 border border-white/10 rounded-2xl px-3 py-2 flex items-center gap-2">
-        <div className="h-7 w-7 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center text-black font-semibold text-[11px]">
-          L3
-        </div>
-        <input
-          placeholder="Paste short project blurb..."
-          className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-gray-500"
-        />
-        <button className="px-2.5 py-1.5 bg-amber-400 text-black rounded-xl text-[11px] font-medium hover:bg-amber-300 transition-colors">
-          Send
-        </button>
-      </div>
-      <p className="text-[10px] text-gray-300 text-right mt-2">Demo only · No data sent.</p>
-    </>
-  );
 
   const DetailContent: React.FC = () => {
     if (!selected) {
@@ -614,7 +577,7 @@ export default function GrantPilotDashboard() {
                   Live
                 </div>
               </div>
-              <AgentContent />
+              <AgentChat grant={selected} />
             </section>
           </div>
         </main>
@@ -668,7 +631,7 @@ export default function GrantPilotDashboard() {
                   Close
                 </button>
               </div>
-              <AgentContent />
+              <AgentChat grant={selected} />
             </div>
           </div>
         )}

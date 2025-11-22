@@ -10,7 +10,8 @@ This project consists of two parts:
 
 - Node.js 20+
 - Docker & Docker Compose (recommended)
-- OpenAI API key
+- OpenAI API key (for grant scraping)
+- Anthropic API key (for AI Grants Agent)
 
 ### Option 1: Docker (Recommended)
 
@@ -24,7 +25,7 @@ This project consists of two parts:
    ```bash
    cd backend
    cp .env.example .env
-   # Edit .env and add your OPENAI_API_KEY
+   # Edit .env and add your OPENAI_API_KEY and ANTHROPIC_API_KEY
    ```
 
 3. **Start backend with Docker**:
@@ -67,7 +68,7 @@ This project consists of two parts:
    cd backend
    npm install
    cp .env.example .env
-   # Edit .env with your OPENAI_API_KEY
+   # Edit .env with your OPENAI_API_KEY and ANTHROPIC_API_KEY
    npm run start:dev
    ```
 
@@ -118,6 +119,7 @@ grantPilot/
 - `GET /api/chains` - List chains
 - `GET /api/categories` - List categories
 - `POST /api/grants/subscribe` - Subscribe to grant
+- `POST /api/agent/chat` - Chat with AI Grants Agent
 
 ### Admin Endpoints
 
@@ -184,6 +186,7 @@ Visit http://localhost:3001/api/docs for interactive API documentation.
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/grantpilot
 OPENAI_API_KEY=sk-your-actual-key-here
+ANTHROPIC_API_KEY=sk-ant-your-actual-key-here
 PORT=3001
 ADMIN_API_KEY=your-secret-admin-key
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
@@ -218,6 +221,12 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
    docker-compose logs -f backend
    ```
 
+### AI Agent not working
+
+1. Ensure ANTHROPIC_API_KEY is set correctly in backend/.env
+2. Check backend logs for authentication errors
+3. Verify grant_id is valid when sending chat requests
+
 ## 📖 Documentation
 
 - Backend README: [backend/README.md](backend/README.md)
@@ -243,9 +252,11 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 2. ✅ Start the frontend
 3. ✅ Explore the API docs at /api/docs
 4. ✅ Test grant filtering and search
-5. 🔧 Configure automated scraping schedule
-6. 🔧 Add your OpenAI API key for AI extraction
-7. 🚀 Deploy to production
+5. ✅ Try the AI Grants Agent in the dashboard
+6. 🔧 Configure automated scraping schedule
+7. 🔧 Add your OpenAI API key for AI extraction
+8. 🔧 Add your Anthropic API key for AI Grants Agent
+9. 🚀 Deploy to production
 
 ## 🤝 Support
 
