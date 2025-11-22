@@ -10,8 +10,7 @@ This project consists of two parts:
 
 - Node.js 20+
 - Docker & Docker Compose (recommended)
-- OpenAI API key (for grant scraping)
-- Anthropic API key (for AI Grants Agent)
+- OpenAI API key (for grant scraping and AI Grants Agent)
 
 ### Option 1: Docker (Recommended)
 
@@ -25,7 +24,7 @@ This project consists of two parts:
    ```bash
    cd backend
    cp .env.example .env
-   # Edit .env and add your OPENAI_API_KEY and ANTHROPIC_API_KEY
+   # Edit .env and add your OPENAI_API_KEY
    ```
 
 3. **Start backend with Docker**:
@@ -68,7 +67,7 @@ This project consists of two parts:
    cd backend
    npm install
    cp .env.example .env
-   # Edit .env with your OPENAI_API_KEY and ANTHROPIC_API_KEY
+   # Edit .env with your OPENAI_API_KEY
    npm run start:dev
    ```
 
@@ -186,7 +185,6 @@ Visit http://localhost:3001/api/docs for interactive API documentation.
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/grantpilot
 OPENAI_API_KEY=sk-your-actual-key-here
-ANTHROPIC_API_KEY=sk-ant-your-actual-key-here
 PORT=3001
 ADMIN_API_KEY=your-secret-admin-key
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
@@ -223,7 +221,7 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
 ### AI Agent not working
 
-1. Ensure ANTHROPIC_API_KEY is set correctly in backend/.env
+1. Ensure OPENAI_API_KEY is set correctly in backend/.env
 2. Check backend logs for authentication errors
 3. Verify grant_id is valid when sending chat requests
 
@@ -254,9 +252,8 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 4. ✅ Test grant filtering and search
 5. ✅ Try the AI Grants Agent in the dashboard
 6. 🔧 Configure automated scraping schedule
-7. 🔧 Add your OpenAI API key for AI extraction
-8. 🔧 Add your Anthropic API key for AI Grants Agent
-9. 🚀 Deploy to production
+7. 🔧 Add your OpenAI API key for AI extraction and Grants Agent
+8. 🚀 Deploy to production
 
 ## 🤝 Support
 

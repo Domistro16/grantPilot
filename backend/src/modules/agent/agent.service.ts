@@ -1,24 +1,24 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { GrantsService } from '../grants/grants.service';
 import { ChatRequestDto, MessageDto } from './dto/chat.dto';
 
 @Injectable()
 export class AgentService {
   private readonly logger = new Logger(AgentService.name);
-  private anthropic: Anthropic;
+  private openai: OpenAI;
   private readonly messageLimit = 10; // messages per session
 
   constructor(
     private configService: ConfigService,
     private grantsService: GrantsService,
   ) {
-    const apiKey = this.configService.get<string>('ANTHROPIC_API_KEY');
+    const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (!apiKey) {
-      this.logger.warn('ANTHROPIC_API_KEY not configured. Agent will not work.');
+      this.logger.warn('OPENAI_API_KEY not configured. Agent will not work.');
     }
-    this.anthropic = new Anthropic({ apiKey: apiKey || '' });
+    this.openai = new OpenAI({ apiKey: apiKey || '' });
   }
 
   async chat(chatRequest: ChatRequestDto): Promise<{ response: string; conversation_id: string }> {
@@ -40,12 +40,16 @@ export class AgentService {
     const userPrompt = this.buildUserPrompt(grant, user_message, conversation_history);
 
     try {
-      // Call Claude API
-      const response = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+      // Call OpenAI API
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4-turbo-preview',
         max_tokens: 1024,
-        system: systemPrompt,
+        temperature: 0.7,
         messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
           ...conversation_history.map(msg => ({
             role: msg.role as 'user' | 'assistant',
             content: msg.content,
@@ -57,9 +61,7 @@ export class AgentService {
         ],
       });
 
-      const assistantResponse = response.content[0].type === 'text'
-        ? response.content[0].text
-        : 'Unable to generate response.';
+      const assistantResponse = response.choices[0]?.message?.content || 'Unable to generate response.';
 
       // Generate conversation ID (could be improved with actual session tracking)
       const conversationId = `conv_${Date.now()}_${grant_id}`;
@@ -69,10 +71,10 @@ export class AgentService {
         conversation_id: conversationId,
       };
     } catch (error) {
-      this.logger.error('Error calling Claude API:', error);
+      this.logger.error('Error calling OpenAI API:', error);
 
       if (error.status === 401) {
-        throw new BadRequestException('Invalid Anthropic API key. Please configure ANTHROPIC_API_KEY.');
+        throw new BadRequestException('Invalid OpenAI API key. Please configure OPENAI_API_KEY.');
       }
 
       throw new BadRequestException('Failed to generate response. Please try again.');
