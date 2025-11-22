@@ -229,22 +229,32 @@ export default function GrantPilotDashboard() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3 mt-2">
-            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-3">
-              <p className="text-[11px] uppercase tracking-wide text-emerald-300 mb-1">Fit (demo)</p>
-              <p className="text-sm font-semibold">Strong for infra + agents</p>
-              <p className="text-[11px] text-gray-400">
-                Based on teams shipping infra, dashboards & agents.
-              </p>
+          {(selected.fit_score || selected.time_to_apply) && (
+            <div className="grid sm:grid-cols-2 gap-3 mt-2">
+              {selected.fit_score && (
+                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-emerald-300 mb-1">Fit</p>
+                  <p className="text-sm font-semibold">{selected.fit_score}</p>
+                  {selected.fit_description && (
+                    <p className="text-[11px] text-gray-400">
+                      {selected.fit_description}
+                    </p>
+                  )}
+                </div>
+              )}
+              {selected.time_to_apply && (
+                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-sky-500/10 via-sky-500/5 to-transparent p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-sky-300 mb-1">Time to apply</p>
+                  <p className="text-sm font-semibold">{selected.time_to_apply}</p>
+                  {selected.time_to_apply_description && (
+                    <p className="text-[11px] text-gray-400">
+                      {selected.time_to_apply_description}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-sky-500/10 via-sky-500/5 to-transparent p-3">
-              <p className="text-[11px] uppercase tracking-wide text-sky-300 mb-1">Time to apply</p>
-              <p className="text-sm font-semibold">45–60 minutes</p>
-              <p className="text-[11px] text-gray-400">
-                Assuming deck, metrics & Notion are ready.
-              </p>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="mt-4 flex flex-col gap-2">

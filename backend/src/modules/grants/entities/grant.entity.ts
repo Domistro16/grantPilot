@@ -54,6 +54,18 @@ export class Grant {
   @Column({ type: 'text' })
   source_url: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  fit_score: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  fit_description: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  time_to_apply: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  time_to_apply_description: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 
