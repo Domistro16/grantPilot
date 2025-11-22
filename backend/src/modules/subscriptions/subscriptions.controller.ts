@@ -1,5 +1,5 @@
 import { Controller, Post, Body, Get, Query, Res, Param } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscribeDto } from './dto/subscribe.dto';
 import * as fs from 'fs';
