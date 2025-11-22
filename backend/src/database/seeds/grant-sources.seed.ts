@@ -11,61 +11,47 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
     return;
   }
 
-  const sources = [
-    // BNB Chain
-    {
-      name: 'BNB Chain Grants',
-      url: 'https://www.bnbchain.org/en/bnb-chain-grants',
-      chain_name: 'BNB Chain',
-      scrape_strategy: 'static_html',
-      is_active: true,
-    },
-    {
-      name: 'BNB Chain Blog - Grants',
-      url: 'https://www.bnbchain.org/en/blog',
-      chain_name: 'BNB Chain',
-      scrape_strategy: 'static_html',
-      is_active: true,
-    },
+ const sources = [
+   // BNB Chain
+   {
+     name: 'BNB Chain Grants Program',
+     url: 'https://www.bnbchain.org/en/grants',
+     chain_name: 'BNB Chain',
+     scrape_strategy: 'static_html',
+     is_active: true,
+   },
 
     // Solana
     {
       name: 'Solana Grants',
       url: 'https://solana.org/grants',
       chain_name: 'Solana',
-      scrape_strategy: 'static_html',
+      scrape_strategy: 'puppeteer',
       is_active: true,
     },
     {
       name: 'Solana Ecosystem',
       url: 'https://solana.com/ecosystem',
       chain_name: 'Solana',
-      scrape_strategy: 'static_html',
+      scrape_strategy: 'puppeteer',
       is_active: true,
     },
 
-    // Ethereum
-    {
-      name: 'Ethereum Foundation ESP',
-      url: 'https://esp.ethereum.foundation/',
-      chain_name: 'Ethereum',
-      scrape_strategy: 'static_html',
-      is_active: true,
-    },
-    {
-      name: 'Ethereum Blog - Grants',
-      url: 'https://blog.ethereum.org/category/grants',
-      chain_name: 'Ethereum',
-      scrape_strategy: 'static_html',
-      is_active: true,
-    },
+   // Ethereum - NOTE: Open applications paused
+   {
+     name: 'Ethereum Foundation ESP',
+     url: 'https://esp.ethereum.foundation/',
+     chain_name: 'Ethereum',
+     scrape_strategy: 'static_html',
+     is_active: false, // Paused as of Aug 2024, moving to RFP/Wishlist model
+   },
 
     // Polygon
     {
       name: 'Polygon Village Grants',
       url: 'https://polygon.technology/village/grants',
       chain_name: 'Polygon',
-      scrape_strategy: 'static_html',
+      scrape_strategy: 'puppeteer',
       is_active: true,
     },
     {
@@ -88,7 +74,7 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Base Ecosystem',
       url: 'https://base.org/ecosystem',
       chain_name: 'Base',
-      scrape_strategy: 'static_html',
+      scrape_strategy: 'puppeteer',
       is_active: true,
     },
 
@@ -97,7 +83,7 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Optimism RetroPGF',
       url: 'https://app.optimism.io/retropgf',
       chain_name: 'Optimism',
-      scrape_strategy: 'static_html',
+      scrape_strategy: 'puppeteer',
       is_active: true,
     },
     {
@@ -108,28 +94,21 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       is_active: true,
     },
 
-    // Arbitrum
-    {
-      name: 'Arbitrum Foundation Grants',
-      url: 'https://arbitrum.foundation/grants',
-      chain_name: 'Arbitrum',
-      scrape_strategy: 'static_html',
-      is_active: true,
-    },
-    {
-      name: 'Arbitrum Forum - Grants',
-      url: 'https://forum.arbitrum.foundation/c/grants/',
-      chain_name: 'Arbitrum',
-      scrape_strategy: 'static_html',
-      is_active: true,
-    },
+   // Arbitrum
+   {
+     name: 'Arbitrum Foundation Grants',
+     url: 'https://arbitrum.foundation/grants',
+     chain_name: 'Arbitrum',
+     scrape_strategy: 'static_html',
+     is_active: true,
+   },
 
     // Near
     {
       name: 'Near Ecosystem Funding',
       url: 'https://near.org/ecosystem/get-funding',
       chain_name: 'Near',
-      scrape_strategy: 'static_html',
+      scrape_strategy: 'puppeteer',
       is_active: true,
     },
     {
@@ -140,21 +119,14 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       is_active: true,
     },
 
-    // Aptos
-    {
-      name: 'Aptos Foundation Grants',
-      url: 'https://aptosfoundation.org/grants',
-      chain_name: 'Aptos',
-      scrape_strategy: 'static_html',
-      is_active: true,
-    },
-    {
-      name: 'Aptos Labs Grants',
-      url: 'https://aptoslabs.com/grants',
-      chain_name: 'Aptos',
-      scrape_strategy: 'static_html',
-      is_active: true,
-    },
+   // Aptos
+   {
+     name: 'Aptos Foundation Grants',
+     url: 'https://aptosfoundation.org/grants',
+     chain_name: 'Aptos',
+     scrape_strategy: 'static_html',
+     is_active: true,
+   },
 
     // Sui
     {
@@ -168,7 +140,7 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Sui Ecosystem',
       url: 'https://sui.io/ecosystem',
       chain_name: 'Sui',
-      scrape_strategy: 'static_html',
+      scrape_strategy: 'puppeteer',
       is_active: true,
     },
 
