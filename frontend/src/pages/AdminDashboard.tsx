@@ -1,0 +1,383 @@
+import React, { useState, useEffect } from "react";
+import { Grant, statusColors } from "../data/grants";
+import { grantsApi } from "../api/grants";
+
+const AdminDashboard: React.FC = () => {
+  const [grants, setGrants] = useState<Grant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Grant | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isNew, setIsNew] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Fetch grants on mount
+  useEffect(() => {
+    loadGrants();
+  }, []);
+
+  const loadGrants = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await grantsApi.getAll();
+      setGrants(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load grants");
+      console.error("Error loading grants:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEdit = (grant: Grant) => {
+    setEditing(grant);
+    setIsNew(false);
+    setModalOpen(true);
+  };
+
+  const openNew = () => {
+    setEditing({
+      id: 0, // Will be assigned by backend
+      chain: "",
+      category: "",
+      title: "",
+      tag: "",
+      amount: "",
+      status: "Open",
+      deadline: "",
+      summary: "",
+      focus: "",
+      link: "",
+      source_url: "",
+    });
+    setIsNew(true);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditing(null);
+    setIsNew(false);
+    setSaving(false);
+  };
+
+  const saveGrant = async () => {
+    if (!editing) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Prepare data
+      const grantData = {
+        chain: editing.chain,
+        category: editing.category,
+        title: editing.title,
+        tag: editing.tag,
+        amount: editing.amount,
+        status: editing.status,
+        deadline: editing.deadline,
+        summary: editing.summary,
+        focus: editing.focus,
+        link: editing.link,
+        source_url: editing.source_url || editing.link,
+      };
+
+      if (isNew) {
+        // Create new grant
+        await grantsApi.create(grantData);
+      } else {
+        // Update existing grant
+        await grantsApi.update(editing.id, grantData);
+      }
+
+      // Reload grants
+      await loadGrants();
+      closeModal();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save grant");
+      console.error("Error saving grant:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteGrant = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this grant?")) return;
+
+    try {
+      setError(null);
+      await grantsApi.delete(id);
+      await loadGrants();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete grant");
+      console.error("Error deleting grant:", err);
+    }
+  };
+
+  const handleFieldChange = (field: keyof Grant, value: string) => {
+    setEditing((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-[#050816] text-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mb-4"></div>
+          <p className="text-sm text-gray-400">Loading grants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen w-full bg-[#050816] text-gray-100">
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-8 py-6 flex flex-col gap-6">
+        <header className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wide">Admin</p>
+            <h1 className="text-2xl font-semibold">GrantPilot Admin Dashboard</h1>
+            <p className="text-xs text-gray-400 mt-1">
+              Manage grant programs from your Web3 Grants Aggregator backend.
+            </p>
+          </div>
+          <button
+            onClick={openNew}
+            className="px-4 py-2 rounded-xl bg-amber-400 text-black text-xs font-semibold hover:bg-amber-300 shadow-md"
+          >
+            + Add new grant
+          </button>
+        </header>
+
+        {error && (
+          <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-4">
+            <p className="text-xs text-rose-300">
+              <span className="font-semibold">Error:</span> {error}
+            </p>
+            <button
+              onClick={() => setError(null)}
+              className="text-[10px] text-rose-200 hover:text-rose-100 mt-2 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        <section className="rounded-2xl bg-black/40 border border-white/10 p-4 overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="text-[11px] uppercase tracking-wide text-gray-400 border-b border-white/10">
+              <tr>
+                <th className="py-2 pr-3">Title</th>
+                <th className="py-2 pr-3">Chain</th>
+                <th className="py-2 pr-3">Category</th>
+                <th className="py-2 pr-3">Status</th>
+                <th className="py-2 pr-3">Amount</th>
+                <th className="py-2 pr-3">Deadline</th>
+                <th className="py-2 pr-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="align-top">
+              {grants.map((g) => (
+                <tr key={g.id} className="border-b border-white/5 last:border-none">
+                  <td className="py-2 pr-3 font-medium text-gray-100 max-w-[220px] truncate">{g.title}</td>
+                  <td className="py-2 pr-3 text-gray-300">{g.chain}</td>
+                  <td className="py-2 pr-3 text-gray-300">{g.category}</td>
+                  <td className="py-2 pr-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${statusColors[g.status] || ""}`}>
+                      {g.status}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3 text-[#FFB000] font-semibold">{g.amount}</td>
+                  <td className="py-2 pr-3 text-gray-300">{g.deadline}</td>
+                  <td className="py-2 pl-3 text-right">
+                    <div className="inline-flex items-center gap-2">
+                      <button
+                        onClick={() => openEdit(g)}
+                        className="px-2 py-1 rounded-lg border border-white/20 text-[11px] text-gray-100 hover:bg-white/10"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteGrant(g.id)}
+                        className="px-2 py-1 rounded-lg border border-rose-500/60 text-[11px] text-rose-200 hover:bg-rose-500/10"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {grants.length === 0 && (
+            <p className="text-[11px] text-gray-500 mt-4 text-center py-8">
+              No grants yet. Click "+ Add new grant" to create the first one.
+            </p>
+          )}
+        </section>
+
+        <p className="text-[10px] text-gray-500">
+          Connected to backend API at{" "}
+          <span className="text-amber-400 font-mono">
+            {import.meta.env.VITE_API_URL || "http://localhost:3001/api"}
+          </span>
+        </p>
+      </div>
+
+      {modalOpen && editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-xl rounded-2xl bg-[#050816] border border-white/10 p-5 shadow-2xl shadow-black/60 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-amber-400">
+                  {isNew ? "New grant" : "Edit grant"}
+                </p>
+                <h2 className="text-lg font-semibold">{editing?.title || "Untitled grant"}</h2>
+              </div>
+              <button
+                onClick={closeModal}
+                disabled={saving}
+                className="rounded-full border border-white/20 px-3 py-1 text-[11px] text-gray-200 disabled:opacity-50"
+              >
+                Close
+              </button>
+            </div>
+
+            {editing && (
+              <>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="block mb-1 text-gray-300">Title *</label>
+                    <input
+                      value={editing.title}
+                      onChange={(e) => handleFieldChange("title", e.target.value)}
+                      className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                      placeholder="e.g., BNB Chain Builder Grants"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block mb-1 text-gray-300">Chain *</label>
+                      <input
+                        value={editing.chain}
+                        onChange={(e) => handleFieldChange("chain", e.target.value)}
+                        className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                        placeholder="e.g., BNB Chain"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-gray-300">Category *</label>
+                      <input
+                        value={editing.category}
+                        onChange={(e) => handleFieldChange("category", e.target.value)}
+                        className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                        placeholder="e.g., Infra, DeFi, Gaming"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block mb-1 text-gray-300">Status *</label>
+                      <select
+                        value={editing.status}
+                        onChange={(e) => handleFieldChange("status", e.target.value)}
+                        className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                      >
+                        <option>Open</option>
+                        <option>Upcoming</option>
+                        <option>Closed</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-gray-300">Amount *</label>
+                      <input
+                        value={editing.amount}
+                        onChange={(e) => handleFieldChange("amount", e.target.value)}
+                        className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                        placeholder="e.g., Up to $150k"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block mb-1 text-gray-300">Deadline *</label>
+                      <input
+                        value={editing.deadline}
+                        onChange={(e) => handleFieldChange("deadline", e.target.value)}
+                        className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                        placeholder="e.g., Dec 30, 2025 or Rolling"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-gray-300">Tag (short) *</label>
+                      <input
+                        value={editing.tag}
+                        onChange={(e) => handleFieldChange("tag", e.target.value)}
+                        className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                        placeholder="e.g., Infra · DeFi · Tooling"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-gray-300">Summary *</label>
+                    <textarea
+                      value={editing.summary}
+                      onChange={(e) => handleFieldChange("summary", e.target.value)}
+                      rows={3}
+                      className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                      placeholder="2-3 sentence summary of what the grant supports..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-gray-300">Focus *</label>
+                    <textarea
+                      value={editing.focus}
+                      onChange={(e) => handleFieldChange("focus", e.target.value)}
+                      rows={3}
+                      className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                      placeholder="1-2 sentences on ideal applicant profile..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-gray-300">Application Link *</label>
+                    <input
+                      value={editing.link}
+                      onChange={(e) => handleFieldChange("link", e.target.value)}
+                      className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 outline-none text-xs"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between gap-3 text-xs">
+                  <p className="text-[10px] text-gray-500 max-w-xs">
+                    {isNew ? "Creating a new grant in the database." : "Updating grant in the database."}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveGrant}
+                      disabled={saving}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 text-black font-semibold hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={closeModal}
+                      disabled={saving}
+                      className="px-3 py-2 rounded-xl border border-white/20 text-gray-200 hover:bg-white/10 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminDashboard;

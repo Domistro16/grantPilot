@@ -77,6 +77,11 @@ export class GrantsService {
     return this.grantsRepository.save(grant);
   }
 
+  async delete(id: number): Promise<void> {
+    const grant = await this.findOne(id);
+    await this.grantsRepository.remove(grant);
+  }
+
   async upsert(createGrantDto: CreateGrantDto): Promise<Grant> {
     // Try to find existing grant by title and link
     const existing = await this.grantsRepository.findOne({
