@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsNotEmpty, MaxLength } from 'class-validator';
+import { IsString, IsEnum, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
 import { GrantStatus } from '../entities/grant.entity';
 
 export class CreateGrantDto {
@@ -51,4 +51,22 @@ export class CreateGrantDto {
   @IsNotEmpty()
   @IsString()
   source_url: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  fit_score?: string;
+
+  @IsOptional()
+  @IsString()
+  fit_description?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  time_to_apply?: string;
+
+  @IsOptional()
+  @IsString()
+  time_to_apply_description?: string;
 }
