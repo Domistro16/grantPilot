@@ -14,6 +14,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ScraperModule } from './modules/scraper/scraper.module';
+import { AgentModule } from './modules/agent/agent.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { ScraperModule } from './modules/scraper/scraper.module';
     SubscriptionsModule,
     AiModule,
     ScraperModule,
+    AgentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

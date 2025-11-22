@@ -10,7 +10,7 @@ This project consists of two parts:
 
 - Node.js 20+
 - Docker & Docker Compose (recommended)
-- OpenAI API key
+- OpenAI API key (for grant scraping and AI Grants Agent)
 
 ### Option 1: Docker (Recommended)
 
@@ -118,6 +118,7 @@ grantPilot/
 - `GET /api/chains` - List chains
 - `GET /api/categories` - List categories
 - `POST /api/grants/subscribe` - Subscribe to grant
+- `POST /api/agent/chat` - Chat with AI Grants Agent
 
 ### Admin Endpoints
 
@@ -218,6 +219,12 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
    docker-compose logs -f backend
    ```
 
+### AI Agent not working
+
+1. Ensure OPENAI_API_KEY is set correctly in backend/.env
+2. Check backend logs for authentication errors
+3. Verify grant_id is valid when sending chat requests
+
 ## 📖 Documentation
 
 - Backend README: [backend/README.md](backend/README.md)
@@ -243,9 +250,10 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 2. ✅ Start the frontend
 3. ✅ Explore the API docs at /api/docs
 4. ✅ Test grant filtering and search
-5. 🔧 Configure automated scraping schedule
-6. 🔧 Add your OpenAI API key for AI extraction
-7. 🚀 Deploy to production
+5. ✅ Try the AI Grants Agent in the dashboard
+6. 🔧 Configure automated scraping schedule
+7. 🔧 Add your OpenAI API key for AI extraction and Grants Agent
+8. 🚀 Deploy to production
 
 ## 🤝 Support
 

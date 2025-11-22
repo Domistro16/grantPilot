@@ -1,172 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Filter, Sparkles } from "lucide-react";
-
-// ------------------------------ MOCK DATA ------------------------------
-const mockGrants = [
-  {
-    id: 1,
-    chain: "BNB Chain",
-    category: "Infra",
-    title: "BNB Chain Builder Grants",
-    tag: "Infra · DeFi · Tooling",
-    amount: "Up to $150k",
-    status: "Open",
-    deadline: "Dec 30, 2025",
-    summary:
-      "Support for builders shipping infra, DeFi, gaming and tooling on BNB Chain.",
-    focus: "Teams with deployed MVPs, traction, or strong ecosystem alignment.",
-    link: "#",
-  },
-  {
-    id: 2,
-    chain: "Solana",
-    category: "Ecosystem",
-    title: "Solana Ecosystem Grants",
-    tag: "Infra · Consumer · Payments",
-    amount: "Varies by track",
-    status: "Open",
-    deadline: "Rolling",
-    summary:
-      "Fueling high-performance apps, consumer products and infra on Solana.",
-    focus: "Strong UX, clear go-to-market, and on-chain traction.",
-    link: "#",
-  },
-  {
-    id: 3,
-    chain: "Ethereum / L2s",
-    category: "Public Goods",
-    title: "Ethereum Foundation Grants",
-    tag: "Research · Public Goods",
-    amount: "Custom per proposal",
-    status: "Upcoming",
-    deadline: "Q1 2026 (est.)",
-    summary:
-      "Support for core research, protocol work and public goods across the Ethereum ecosystem.",
-    focus: "Long-term, mission-driven work that improves Ethereum for everyone.",
-    link: "#",
-  },
-  {
-    id: 4,
-    chain: "Multichain",
-    category: "Hackathons",
-    title: "Ecosystem & Hackathon Match",
-    tag: "Match · Acceleration",
-    amount: "$5k – $50k",
-    status: "Open",
-    deadline: "Jan 15, 2026",
-    summary:
-      "Match funding for teams emerging from hackathons and accelerator programs.",
-    focus: "Early-stage teams with a clear plan to ship in 90 days.",
-    link: "#",
-  },
-  {
-    id: 5,
-    chain: "Polygon",
-    category: "Ecosystem",
-    title: "Polygon Village Grants",
-    tag: "DeFi · Gaming · Infra",
-    amount: "Varies by track",
-    status: "Open",
-    deadline: "Rolling",
-    summary:
-      "Support for teams expanding the Polygon ecosystem across key verticals.",
-    focus: "Protocols and products that grow usage on Polygon.",
-    link: "#",
-  },
-  {
-    id: 6,
-    chain: "Base",
-    category: "Consumer",
-    title: "Base Ecosystem Grants",
-    tag: "Consumer · Tools",
-    amount: "Up to $150k",
-    status: "Open",
-    deadline: "Rolling",
-    summary: "Growing consumer apps, infra and tools on Base.",
-    focus: "Teams with strong user focus and measurable on-chain activity.",
-    link: "#",
-  },
-  {
-    id: 7,
-    chain: "Arbitrum",
-    category: "L2 Infra",
-    title: "Arbitrum Grants (Public Goods)",
-    tag: "Infra · Tooling",
-    amount: "Custom",
-    status: "Upcoming",
-    deadline: "TBA",
-    summary: "Support for public goods and infra around Arbitrum.",
-    focus: "Tooling and infra that benefit the wider ecosystem.",
-    link: "#",
-  },
-  {
-    id: 8,
-    chain: "Optimism",
-    category: "Public Goods",
-    title: "Optimism Grants & RPGF",
-    tag: "Retroactive · Public Goods",
-    amount: "Varies",
-    status: "Open",
-    deadline: "By season",
-    summary:
-      "Retroactive and direct grants for impactful public goods on Optimism.",
-    focus: "Measurable impact for the Optimism Collective.",
-    link: "#",
-  },
-  {
-    id: 9,
-    chain: "Near",
-    category: "Tooling",
-    title: "Near Ecosystem Grants",
-    tag: "Tools · Infra",
-    amount: "Up to $75k",
-    status: "Open",
-    deadline: "Rolling",
-    summary:
-      "Boosting Near ecosystem with tools, infra, and user-facing apps.",
-    focus: "Developer tools and infra with real usage.",
-    link: "#",
-  },
-  {
-    id: 10,
-    chain: "Aptos",
-    category: "Infra",
-    title: "Aptos Developer Grants",
-    tag: "Infra · Tooling",
-    amount: "Up to $100k",
-    status: "Open",
-    deadline: "Rolling",
-    summary: "Funding for builders shipping infra and tooling on Aptos.",
-    focus: "High-leverage infra and devex improvements.",
-    link: "#",
-  },
-  {
-    id: 11,
-    chain: "Sui",
-    category: "Tooling",
-    title: "Sui Developer Grants",
-    tag: "Tooling · Infra",
-    amount: "Up to $50k",
-    status: "Open",
-    deadline: "Rolling",
-    summary: "Empowering devs with tools and infra on Sui.",
-    focus: "High-impact tools used by other teams.",
-    link: "#",
-  },
-  {
-    id: 12,
-    chain: "Scroll",
-    category: "ZK",
-    title: "Scroll Ecosystem Grants",
-    tag: "ZK · Infra",
-    amount: "Varies",
-    status: "Open",
-    deadline: "TBA",
-    summary: "ZK infra and ecosystem grants for Scroll.",
-    focus: "Research, infra and tooling around ZK-based apps.",
-    link: "#",
-  },
-];
+import { grantsApi } from "./api/grants";
+import { Grant } from "./data/grants";
+import { AgentChat } from "./components/AgentChat";
 
 const statusColors: Record<string, string> = {
   Open: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40",
@@ -174,166 +10,322 @@ const statusColors: Record<string, string> = {
   Closed: "bg-rose-500/10 text-rose-300 border border-rose-500/40",
 };
 
+interface Chain {
+  id: number;
+  name: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+}
+
 export default function GrantPilotDashboard() {
-  const [selectedId, setSelectedId] = useState<number>(1);
+  // Core data state
+  const [grants, setGrants] = useState<Grant[]>([]);
+  const [chains, setChains] = useState<Chain[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // UI state
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [agentOpen, setAgentOpen] = useState(false);
   const [chainFilter, setChainFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscribedGrants, setSubscribedGrants] = useState<Set<number>>(new Set());
   const [detailOpen, setDetailOpen] = useState(false);
 
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [subscribing, setSubscribing] = useState(false);
+
   const activeItemRef = useRef<HTMLButtonElement | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const selected = mockGrants.find((g) => g.id === selectedId) || mockGrants[0];
-
-  const chainOptions = ["All", ...Array.from(new Set(mockGrants.map((g) => g.chain)))];
-  const categoryOptions = ["All", ...Array.from(new Set(mockGrants.map((g) => g.category)))];
   const statusOptions = ["All", "Open", "Upcoming", "Closed"];
 
-  const normalizedQuery = query.toLowerCase().trim();
+  // Debounced search (300ms delay)
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
 
-  const filtered = mockGrants.filter((g) => {
-    const matchesQuery =
-      !normalizedQuery ||
-      g.title.toLowerCase().includes(normalizedQuery) ||
-      g.chain.toLowerCase().includes(normalizedQuery) ||
-      g.summary.toLowerCase().includes(normalizedQuery) ||
-      g.tag.toLowerCase().includes(normalizedQuery);
+    debounceTimeoutRef.current = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
 
-    const matchesChain = chainFilter === "All" || g.chain === chainFilter;
-    const matchesCategory = categoryFilter === "All" || g.category === categoryFilter;
-    const matchesStatus = statusFilter === "All" || g.status === statusFilter;
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [query]);
 
-    return matchesQuery && matchesChain && matchesCategory && matchesStatus;
-  });
+  // Fetch chains and categories on mount
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const [chainsData, categoriesData] = await Promise.all([
+          grantsApi.getAll().then(() =>
+            fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3001/api"}/chains`)
+              .then(res => res.json())
+          ),
+          fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3001/api"}/categories`)
+            .then(res => res.json())
+        ]);
+        setChains(chainsData);
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error("Error fetching metadata:", err);
+        // Continue anyway, filters will just show "All"
+      }
+    };
 
+    fetchMetadata();
+  }, []);
+
+  // Fetch grants whenever filters change
+  useEffect(() => {
+    const fetchGrants = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const filters: any = {};
+        if (chainFilter !== "All") filters.chain = chainFilter;
+        if (categoryFilter !== "All") filters.category = categoryFilter;
+        if (statusFilter !== "All") filters.status = statusFilter;
+        if (debouncedQuery.trim()) filters.search = debouncedQuery.trim();
+
+        const data = await grantsApi.getAll(filters);
+        setGrants(data);
+
+        // If current selected grant is not in results, select the first one
+        if (data.length > 0) {
+          const stillExists = data.find(g => g.id === selectedId);
+          if (!stillExists) {
+            setSelectedId(data[0].id);
+          } else if (selectedId === null) {
+            setSelectedId(data[0].id);
+          }
+        } else {
+          setSelectedId(null);
+        }
+      } catch (err) {
+        console.error("Error fetching grants:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load grants. Please check your connection and try again."
+        );
+        setGrants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGrants();
+  }, [chainFilter, categoryFilter, statusFilter, debouncedQuery]);
+
+  // Auto-scroll to selected item
   useEffect(() => {
     if (activeItemRef.current) {
       activeItemRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [selectedId]);
 
-  const AgentContent: React.FC = () => (
-    <>
-      <div className="rounded-xl border border-white/10 bg-black/40 p-3 space-y-3 text-[11px] text-gray-200 overflow-y-auto max-h-[50vh] lg:max-h-none">
-        <div className="bg-white/5 border border-white/10 rounded-2xl px-3 py-2 max-w-[90%]">
-          <p>Tell me what you're building and I'll map it to realistic grant paths.</p>
-        </div>
-        <div className="bg-white/5 border border-white/10 rounded-2xl px-3 py-2 max-w-[90%]">
-          <p className="text-gray-300 mb-1">For this {selected.chain} program, consider:</p>
-          <ul className="list-disc list-inside text-gray-300 space-y-0.5">
-            <li>Your traction with dashboards and agents.</li>
-            <li>Why this should live on {selected.chain}.</li>
-            <li>How funds map to milestones.</li>
-          </ul>
-        </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-2xl px-3 py-2 max-w-[90%]">
-          <p className="text-emerald-200 text-[11px] font-semibold mb-0.5">Coming soon</p>
-          <p className="text-emerald-100/90 text-[11px]">
-            Connect your deck + Notion once and auto-draft answers for every grant you click.
-          </p>
-        </div>
-      </div>
-      <div className="mt-3 bg-black/70 border border-white/10 rounded-2xl px-3 py-2 flex items-center gap-2">
-        <div className="h-7 w-7 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center text-black font-semibold text-[11px]">
-          L3
-        </div>
-        <input
-          placeholder="Paste short project blurb..."
-          className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-gray-500"
-        />
-        <button className="px-2.5 py-1.5 bg-amber-400 text-black rounded-xl text-[11px] font-medium hover:bg-amber-300 transition-colors">
-          Send
-        </button>
-      </div>
-      <p className="text-[10px] text-gray-300 text-right mt-2">Demo only · No data sent.</p>
-    </>
-  );
+  // Get selected grant
+  const selected = grants.find((g) => g.id === selectedId) || grants[0] || null;
+  const isSubscribed = selected ? subscribedGrants.has(selected.id) : false;
 
-  const DetailContent: React.FC = () => (
-    <>
-      <h2 className="text-xl font-semibold mb-2">{selected.title}</h2>
-      <p className="text-[11px] text-gray-400 mb-3">{selected.tag}</p>
+  // Prepare filter options
+  const chainOptions = ["All", ...chains.map(c => c.name)];
+  const categoryOptions = ["All", ...categories.map(c => c.name)];
 
-      <div className="text-xs text-gray-300 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <span
-            className={`px-2 py-1 rounded-full text-[10px] ${statusColors[selected.status]}`}
+  // Handle subscription
+  const handleSubscribe = async () => {
+    if (!selected) return;
+
+    // Prompt for email
+    const email = prompt("Enter your email to subscribe to updates for this grant:");
+    if (!email) return;
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      setSubscribing(true);
+      const result = await grantsApi.subscribe(email, selected.id);
+
+      if (result.success) {
+        setSubscribedGrants(prev => new Set(prev).add(selected.id));
+        alert(`Success! You're subscribed to updates for "${selected.title}"`);
+      } else {
+        alert(result.message || "Subscription successful!");
+        setSubscribedGrants(prev => new Set(prev).add(selected.id));
+      }
+    } catch (err) {
+      console.error("Subscription error:", err);
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Failed to subscribe. Please try again."
+      );
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
+
+  const DetailContent: React.FC = () => {
+    if (!selected) {
+      return (
+        <div className="text-center py-8 text-gray-400 text-sm">
+          No grant selected
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <h2 className="text-xl font-semibold mb-2">{selected.title}</h2>
+        <p className="text-[11px] text-gray-400 mb-3">{selected.tag}</p>
+
+        <div className="text-xs text-gray-300 space-y-3">
+          <div className="flex items-center gap-2 mb-1">
+            <span
+              className={`px-2 py-1 rounded-full text-[10px] ${statusColors[selected.status]}`}
+            >
+              {selected.status}
+            </span>
+            <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-[10px]">
+              {selected.chain}
+            </span>
+            <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-[10px]">
+              {selected.category}
+            </span>
+          </div>
+
+          <p className="text-gray-300">{selected.summary}</p>
+
+          <div className="bg-black/30 border border-white/10 rounded-xl p-3 space-y-1">
+            <p className="text-[11px] text-gray-300">
+              <strong>Funding:</strong>{" "}
+              <span className="text-[#FFB000] font-semibold">{selected.amount}</span>
+            </p>
+            <p className="text-[11px] text-gray-300">
+              <strong>Deadline:</strong> {selected.deadline}
+            </p>
+            <p className="text-[11px] text-gray-300">
+              <strong>Focus:</strong> {selected.focus}
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3 mt-2">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-3">
+              <p className="text-[11px] uppercase tracking-wide text-emerald-300 mb-1">Fit (demo)</p>
+              <p className="text-sm font-semibold">Strong for infra + agents</p>
+              <p className="text-[11px] text-gray-400">
+                Based on teams shipping infra, dashboards & agents.
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-sky-500/10 via-sky-500/5 to-transparent p-3">
+              <p className="text-[11px] uppercase tracking-wide text-sky-300 mb-1">Time to apply</p>
+              <p className="text-sm font-semibold">45–60 minutes</p>
+              <p className="text-[11px] text-gray-400">
+                Assuming deck, metrics & Notion are ready.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            onClick={handleSubscribe}
+            disabled={subscribing}
+            className={`w-full px-3 py-2 rounded-xl text-black text-xs font-semibold transition flex items-center justify-center gap-2 shadow-md ${
+              isSubscribed
+                ? "bg-emerald-500 hover:bg-emerald-400"
+                : subscribing
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-amber-400 hover:bg-amber-300"
+            }`}
           >
-            {selected.status}
-          </span>
-          <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-[10px]">
-            {selected.chain}
-          </span>
-          <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-[10px]">
-            {selected.category}
-          </span>
+            {subscribing ? (
+              <>Subscribing...</>
+            ) : isSubscribed ? (
+              <>
+                <span className="h-1.5 w-1.5 bg-emerald-300 rounded-full animate-ping" />
+                Subscribed
+              </>
+            ) : (
+              <>Subscribe to this grant</>
+            )}
+          </button>
+          <a
+            href={selected.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/10 text-xs hover:bg-white/20 transition text-center"
+          >
+            Open grant page
+          </a>
+          <button
+            onClick={() => {
+              setDetailOpen(false);
+              setAgentOpen(true);
+            }}
+            className="w-full flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 text-[11px] font-medium shadow-[0_0_12px_rgba(16,185,129,0.35)] text-center transition-all duration-300 ease-out hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(16,185,129,0.55)]"
+          >
+            <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" />
+            Let GrantPilot draft my first response
+          </button>
         </div>
+      </>
+    );
+  };
 
-        <p className="text-gray-300">{selected.summary}</p>
-
-        <div className="bg-black/30 border border-white/10 rounded-xl p-3 space-y-1">
-          <p className="text-[11px] text-gray-300">
-            <strong>Funding:</strong>{" "}
-            <span className="text-[#FFB000] font-semibold">{selected.amount}</span>
-          </p>
-          <p className="text-[11px] text-gray-300">
-            <strong>Deadline:</strong> {selected.deadline}
-          </p>
-          <p className="text-[11px] text-gray-300">
-            <strong>Focus:</strong> {selected.focus}
-          </p>
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-3 mt-2">
-          <div className="rounded-xl border border-white/10 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-3">
-            <p className="text-[11px] uppercase tracking-wide text-emerald-300 mb-1">Fit (demo)</p>
-            <p className="text-sm font-semibold">Strong for infra + agents</p>
-            <p className="text-[11px] text-gray-400">
-              Based on teams shipping infra, dashboards & agents.
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-gradient-to-br from-sky-500/10 via-sky-500/5 to-transparent p-3">
-            <p className="text-[11px] uppercase tracking-wide text-sky-300 mb-1">Time to apply</p>
-            <p className="text-sm font-semibold">45–60 minutes</p>
-            <p className="text-[11px] text-gray-400">
-              Assuming deck, metrics & Notion are ready.
-            </p>
-          </div>
+  // Loading state
+  if (loading && grants.length === 0) {
+    return (
+      <div className="min-h-screen w-full bg-[#050816] text-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400 mb-4"></div>
+          <p className="text-sm text-gray-400">Loading grants from Web3 ecosystems...</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="mt-4 flex flex-col gap-2">
-        <button
-          onClick={() => setIsSubscribed((prev) => !prev)}
-          className={`w-full px-3 py-2 rounded-xl text-black text-xs font-semibold transition flex items-center justify-center gap-2 shadow-md ${
-            isSubscribed ? "bg-emerald-500 hover:bg-emerald-400" : "bg-amber-400 hover:bg-amber-300"
-          }`}
-        >
-          {isSubscribed ? (
-            <>
-              <span className="h-1.5 w-1.5 bg-emerald-300 rounded-full animate-ping" />
-              Subscribed
-            </>
-          ) : (
-            <>Subscribe to this grant</>
-          )}
-        </button>
-        <a
-          href={selected.link}
-          className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/10 text-xs hover:bg-white/20 transition text-center"
-        >
-          Open grant page
-        </a>
-        <button onClick={() => { setDetailOpen(false); setAgentOpen(true); }} className="w-full flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 text-[11px] font-medium shadow-[0_0_12px_rgba(16,185,129,0.35)] text-center transition-all duration-300 ease-out hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(16,185,129,0.55)]">
-          <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" />
-          Let GrantPilot draft my first response
-        </button>
+  // Error state
+  if (error && grants.length === 0) {
+    return (
+      <div className="min-h-screen w-full bg-[#050816] text-gray-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-center">
+          <div className="text-rose-400 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Unable to Load Grants</h2>
+          <p className="text-sm text-gray-400 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-amber-400 text-black rounded-xl text-sm font-semibold hover:bg-amber-300 transition"
+          >
+            Retry
+          </button>
+        </div>
       </div>
-    </>
-  );
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#050816] text-gray-100">
@@ -379,8 +371,8 @@ export default function GrantPilotDashboard() {
                   <Filter className="h-3 w-3" />
                   <span>Discovery controls</span>
                 </div>
-                <span className="hidden sm:inline text-[10px] text-gray-300">
-                  Demo data · Not connected to real programs (yet).
+                <span className="hidden sm:inline text-[10px] text-emerald-300">
+                  {loading ? "Updating..." : `${grants.length} grants loaded`}
                 </span>
               </div>
               <div className="relative">
@@ -443,9 +435,14 @@ export default function GrantPilotDashboard() {
               </p>
             </section>
             <section className="bg-black/30 border border-white/10 p-4 rounded-2xl space-y-3">
-              <div className="flex items-center gap-1 text-[11px] text-gray-400">
-                <Filter className="h-3 w-3" />
-                <span>Discovery controls</span>
+              <div className="flex items-center justify-between text-[11px] text-gray-400">
+                <div className="flex items-center gap-1">
+                  <Filter className="h-3 w-3" />
+                  <span>Discovery controls</span>
+                </div>
+                <span className="text-[10px] text-emerald-300">
+                  {loading ? "..." : `${grants.length}`}
+                </span>
               </div>
               <div className="relative">
                 <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-gray-500 pointer-events-none" />
@@ -499,7 +496,12 @@ export default function GrantPilotDashboard() {
             {/* LEFT COLUMN – scrollable list */}
             <section className="self-start lg:-mt-40 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 p-4 flex flex-col overflow-hidden shadow-lg shadow-black/20">
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-4 relative after:content-[''] after:absolute after:top-0 after:left-0 after:right-0 after:h-3 after:bg-gradient-to-b after:from-black/30 after:to-transparent after:pointer-events-none after:opacity-0 hover:after:opacity-100 after:transition-all after:duration-300">
-                {filtered.map((g) => (
+                {loading && (
+                  <div className="text-center py-4">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-amber-400"></div>
+                  </div>
+                )}
+                {!loading && grants.map((g) => (
                   <button
                     key={g.id}
                     ref={g.id === selectedId ? activeItemRef : null}
@@ -533,10 +535,23 @@ export default function GrantPilotDashboard() {
                     </p>
                   </button>
                 ))}
-                {filtered.length === 0 && (
-                  <p className="text-[11px] text-gray-500 mt-4">
-                    No grants match this combination yet. Try loosening a filter.
-                  </p>
+                {!loading && grants.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-[11px] text-gray-500 mb-2">
+                      No grants match your filters.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setChainFilter("All");
+                        setCategoryFilter("All");
+                        setStatusFilter("All");
+                        setQuery("");
+                      }}
+                      className="text-[11px] text-amber-400 hover:text-amber-300 underline"
+                    >
+                      Reset filters
+                    </button>
+                  </div>
                 )}
               </div>
             </section>
@@ -562,7 +577,7 @@ export default function GrantPilotDashboard() {
                   Live
                 </div>
               </div>
-              <AgentContent />
+              <AgentChat grant={selected} />
             </section>
           </div>
         </main>
@@ -573,7 +588,7 @@ export default function GrantPilotDashboard() {
             <div className="w-full bg-[#050b1a] rounded-t-2xl border-t border-white/10 p-4 max-h-[85vh] overflow-y-auto shadow-2xl shadow-black/60">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold truncate pr-4">
-                  {selected.title}
+                  {selected?.title || "Grant Details"}
                 </h2>
                 <button
                   onClick={() => setDetailOpen(false)}
@@ -606,7 +621,7 @@ export default function GrantPilotDashboard() {
                     AI Grants Agent
                   </p>
                   <p className="text-xs text-gray-400">
-                    Context-aware drafts for {selected.chain} grants.
+                    Context-aware drafts for {selected?.chain || "your"} grants.
                   </p>
                 </div>
                 <button
@@ -616,7 +631,7 @@ export default function GrantPilotDashboard() {
                   Close
                 </button>
               </div>
-              <AgentContent />
+              <AgentChat grant={selected} />
             </div>
           </div>
         )}
