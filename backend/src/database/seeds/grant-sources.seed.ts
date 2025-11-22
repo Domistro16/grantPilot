@@ -26,14 +26,14 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Solana Grants',
       url: 'https://solana.org/grants',
       chain_name: 'Solana',
-      scrape_strategy: 'puppeteer',
+      scrape_strategy: 'static_html',
       is_active: true,
     },
     {
       name: 'Solana Ecosystem',
       url: 'https://solana.com/ecosystem',
       chain_name: 'Solana',
-      scrape_strategy: 'puppeteer',
+      scrape_strategy: 'static_html',
       is_active: true,
     },
 
@@ -51,7 +51,7 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Polygon Village Grants',
       url: 'https://polygon.technology/village/grants',
       chain_name: 'Polygon',
-      scrape_strategy: 'puppeteer',
+      scrape_strategy: 'static_html',
       is_active: true,
     },
     {
@@ -74,7 +74,7 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Base Ecosystem',
       url: 'https://base.org/ecosystem',
       chain_name: 'Base',
-      scrape_strategy: 'puppeteer',
+      scrape_strategy: 'static_html',
       is_active: true,
     },
 
@@ -83,7 +83,7 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Optimism RetroPGF',
       url: 'https://app.optimism.io/retropgf',
       chain_name: 'Optimism',
-      scrape_strategy: 'puppeteer',
+      scrape_strategy: 'static_html',
       is_active: true,
     },
     {
@@ -108,7 +108,7 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Near Ecosystem Funding',
       url: 'https://near.org/ecosystem/get-funding',
       chain_name: 'Near',
-      scrape_strategy: 'puppeteer',
+      scrape_strategy: 'static_html',
       is_active: true,
     },
     {
@@ -140,7 +140,7 @@ export async function seedGrantSources(dataSource: DataSource): Promise<void> {
       name: 'Sui Ecosystem',
       url: 'https://sui.io/ecosystem',
       chain_name: 'Sui',
-      scrape_strategy: 'puppeteer',
+      scrape_strategy: 'static_html',
       is_active: true,
     },
 
