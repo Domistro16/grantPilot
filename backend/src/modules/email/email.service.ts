@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as nodemailer from 'nodemailer';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -17,12 +18,47 @@ export class EmailService {
   private readonly emailFrom: string;
   private readonly emailFromName: string;
   private readonly frontendUrl: string;
+  private smtpTransporter: nodemailer.Transporter | null = null;
 
   constructor(private configService: ConfigService) {
     this.emailProvider = this.configService.get<string>('EMAIL_PROVIDER', 'console');
     this.emailFrom = this.configService.get<string>('EMAIL_FROM', 'noreply@grantpilot.com');
     this.emailFromName = this.configService.get<string>('EMAIL_FROM_NAME', 'GrantPilot');
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
+
+    // Initialize SMTP transporter if SMTP is configured
+    if (this.emailProvider === 'smtp') {
+      this.initializeSMTP();
+    }
+  }
+
+  private initializeSMTP() {
+    const smtpHost = this.configService.get<string>('SMTP_HOST');
+    const smtpPort = this.configService.get<number>('SMTP_PORT', 587);
+    const smtpUser = this.configService.get<string>('SMTP_USER');
+    const smtpPass = this.configService.get<string>('SMTP_PASS');
+    const smtpSecure = this.configService.get<boolean>('SMTP_SECURE', false);
+
+    if (!smtpHost || !smtpUser || !smtpPass) {
+      this.logger.warn('SMTP credentials not configured. Emails will be logged to console.');
+      return;
+    }
+
+    try {
+      this.smtpTransporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpSecure, // true for 465, false for other ports
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+
+      this.logger.log(`SMTP transporter initialized: ${smtpHost}:${smtpPort}`);
+    } catch (error) {
+      this.logger.error('Failed to initialize SMTP transporter:', error);
+    }
   }
 
   async sendSubscriptionConfirmation(email: string, grant: any, unsubscribeToken: string): Promise<boolean> {
@@ -153,6 +189,9 @@ export class EmailService {
 
   private async sendEmail(options: EmailOptions): Promise<void> {
     switch (this.emailProvider) {
+      case 'smtp':
+        await this.sendViaSMTP(options);
+        break;
       case 'console':
         this.sendViaConsole(options);
         break;
@@ -162,6 +201,29 @@ export class EmailService {
       default:
         this.logger.warn(`Unknown email provider: ${this.emailProvider}. Falling back to console.`);
         this.sendViaConsole(options);
+    }
+  }
+
+  private async sendViaSMTP(options: EmailOptions): Promise<void> {
+    if (!this.smtpTransporter) {
+      this.logger.error('SMTP transporter not initialized. Falling back to console.');
+      this.sendViaConsole(options);
+      return;
+    }
+
+    try {
+      const info = await this.smtpTransporter.sendMail({
+        from: `"${this.emailFromName}" <${this.emailFrom}>`,
+        to: options.to,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+      });
+
+      this.logger.log(`Email sent via SMTP: ${info.messageId}`);
+    } catch (error) {
+      this.logger.error('Failed to send email via SMTP:', error);
+      throw error;
     }
   }
 
