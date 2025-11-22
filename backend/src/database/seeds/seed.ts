@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { Chain } from '../../modules/chains/entities/chain.entity';
 import { Category } from '../../modules/categories/entities/category.entity';
 import { Grant, GrantStatus } from '../../modules/grants/entities/grant.entity';
+import { seedGrantSources } from './grant-sources.seed';
 
 export async function runSeeds(dataSource: DataSource) {
   console.log('🌱 Seeding database...');
@@ -230,6 +231,9 @@ export async function runSeeds(dataSource: DataSource) {
       console.log(`✅ Created grant: ${grantData.title}`);
     }
   }
+
+  // Seed Grant Sources
+  await seedGrantSources(dataSource);
 
   console.log('✨ Database seeding completed!');
 }
