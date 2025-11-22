@@ -193,43 +193,58 @@ export class ScraperService {
   private async fetchStaticHTML(url: string): Promise<string> {
     this.logger.debug(`Fetching static HTML from: ${url}`);
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; GrantPilotBot/1.0)',
-      },
-    });
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        signal: controller.signal,
+      });
 
-    const html = await response.text();
-    const $ = cheerio.load(html);
+      clearTimeout(timeout);
 
-    // Remove scripts, styles, nav, footer
-    $('script, style, nav, footer, header').remove();
-
-    // Extract main content (try common selectors)
-    let content = '';
-    const selectors = ['main', 'article', '.content', '#content', 'body'];
-
-    for (const selector of selectors) {
-      const text = $(selector).text().trim();
-      if (text.length > 200) {
-        content = text;
-        break;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      // Remove scripts, styles, nav, footer
+      $('script, style, nav, footer, header').remove();
+
+      // Extract main content (try common selectors)
+      let content = '';
+      const selectors = ['main', 'article', '.content', '#content', 'body'];
+
+      for (const selector of selectors) {
+        const text = $(selector).text().trim();
+        if (text.length > 200) {
+          content = text;
+          break;
+        }
+      }
+
+      if (!content) {
+        content = $('body').text().trim();
+      }
+
+      // Clean up whitespace
+      content = content.replace(/\s+/g, ' ').trim();
+
+      // Limit to first 15000 characters to avoid token limits
+      return content.substring(0, 15000);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error(`Fetch timeout after 15 seconds for ${url}`);
+      }
+      throw new Error(`Failed to fetch ${url}: ${error.message}`);
     }
-
-    if (!content) {
-      content = $('body').text().trim();
-    }
-
-    // Clean up whitespace
-    content = content.replace(/\s+/g, ' ').trim();
-
-    // Limit to first 15000 characters to avoid token limits
-    return content.substring(0, 15000);
   }
 
   /**
@@ -238,14 +253,25 @@ export class ScraperService {
   private async fetchWithPuppeteer(url: string): Promise<string> {
     this.logger.debug(`Fetching with Puppeteer from: ${url}`);
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-
+    let browser;
     try {
+      // Try to use system Chrome first, fallback to bundled Chromium
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+        ],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      });
+
       const page = await browser.newPage();
-      await page.setUserAgent('Mozilla/5.0 (compatible; GrantPilotBot/1.0)');
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
       await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
@@ -268,8 +294,13 @@ export class ScraperService {
       });
 
       return content.substring(0, 15000);
+    } catch (error) {
+      this.logger.error(`Puppeteer error for ${url}: ${error.message}`);
+      throw new Error(`Failed to fetch with Puppeteer: ${error.message}`);
     } finally {
-      await browser.close();
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 
@@ -407,6 +438,7 @@ Return ONLY valid JSON. No markdown, no explanations.`;
           link: grantData.link || sourceUrl,
           tag: grantData.tag,
           category: grantData.category,
+          source_url: sourceUrl,
         });
         this.logger.debug(`Updated grant: ${grantData.title}`);
       }
@@ -429,6 +461,7 @@ Return ONLY valid JSON. No markdown, no explanations.`;
         summary: grantData.summary,
         focus: grantData.focus,
         link: grantData.link || sourceUrl,
+        source_url: sourceUrl,
       });
       this.logger.debug(`Added new grant: ${grantData.title}`);
 
