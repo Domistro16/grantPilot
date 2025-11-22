@@ -1,10 +1,19 @@
 import { DataSource } from 'typeorm';
 import { Chain } from '../../modules/chains/entities/chain.entity';
 import { Category } from '../../modules/categories/entities/category.entity';
+import { GrantSource } from '../../modules/scraper/entities/grant-source.entity';
+import { ScraperLog } from '../../modules/scraper/entities/scraper-log.entity';
+import { Grant } from '../../modules/grants/entities/grant.entity';
+import { UserSubscription } from '../../modules/subscriptions/entities/user-subscription.entity';
 import { seedGrantSources } from './grant-sources.seed';
 
 export async function runSeeds(dataSource: DataSource) {
   console.log('🌱 Seeding database...');
+
+  // Ensure tables exist (synchronize schema)
+  console.log('📋 Synchronizing database schema...');
+  await dataSource.synchronize();
+  console.log('✅ Schema synchronized');
 
   // Seed Chains
   const chainRepository = dataSource.getRepository(Chain);
