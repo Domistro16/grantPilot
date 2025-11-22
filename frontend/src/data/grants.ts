@@ -13,6 +13,10 @@ export interface Grant {
   focus: string;
   link: string;
   source_url?: string;
+  fit_score?: string | null;
+  fit_description?: string | null;
+  time_to_apply?: string | null;
+  time_to_apply_description?: string | null;
   created_at?: string;
   updated_at?: string;
 }
