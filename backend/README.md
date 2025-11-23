@@ -52,6 +52,17 @@ A NestJS-powered backend that automatically aggregates, organizes, and tracks gr
    PORT=3001
    ADMIN_API_KEY=your-secret-admin-key
    CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+
+   # Email Configuration (Optional - defaults to console)
+   EMAIL_PROVIDER=smtp  # or 'console' for development
+   EMAIL_FROM=noreply@yourdomain.com
+   EMAIL_FROM_NAME=GrantPilot
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=your_email@gmail.com
+   SMTP_PASS=your_app_password  # For Gmail, use App Password
+   FRONTEND_URL=http://localhost:5173
    ```
 
 3. **Start PostgreSQL** (if not using Docker):
@@ -141,6 +152,14 @@ A NestJS-powered backend that automatically aggregates, organizes, and tracks gr
 - **POST** `/api/grants/subscribe` - Subscribe to grant updates
   - Body: `{ email: string, grant_id: number }`
   - Returns: `{ success: boolean, message: string }`
+  - Sends confirmation email via configured email provider
+
+### Email (Testing)
+
+- **POST** `/api/email/test` - Send test email
+  - Body: `{ email: string, type: 'confirmation' | 'deadline' | 'update' }`
+  - Returns: `{ success: boolean, message: string }`
+  - Useful for testing SMTP configuration
 
 ### Scraper (Admin Only)
 
@@ -272,8 +291,43 @@ Currently scraping from:
 | `CORS_ORIGINS` | Allowed origins (comma-separated) | `http://localhost:3000,http://localhost:5173` |
 | `RATE_LIMIT_TTL` | Rate limit window (ms) | `900000` (15 min) |
 | `RATE_LIMIT_MAX` | Max requests per window | `100` |
+| `EMAIL_PROVIDER` | Email service provider | `smtp`, `console`, or `sendgrid` |
+| `EMAIL_FROM` | Sender email address | `noreply@yourdomain.com` |
+| `EMAIL_FROM_NAME` | Sender display name | `GrantPilot` |
+| `SMTP_HOST` | SMTP server hostname | `smtp.gmail.com` |
+| `SMTP_PORT` | SMTP server port | `587` (TLS) or `465` (SSL) |
+| `SMTP_SECURE` | Use SSL/TLS | `false` for port 587, `true` for 465 |
+| `SMTP_USER` | SMTP username | `your_email@gmail.com` |
+| `SMTP_PASS` | SMTP password | Gmail App Password or SMTP password |
+| `FRONTEND_URL` | Frontend URL for email links | `http://localhost:5173` |
 
 ## 🐛 Troubleshooting
+
+### Email/SMTP not working
+
+**For Gmail users:**
+1. Enable 2-Factor Authentication on your Google account
+2. Generate an App Password: https://myaccount.google.com/apppasswords
+3. Use the App Password as `SMTP_PASS` (not your regular password)
+4. Set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_SECURE=false`
+
+**For other providers:**
+- **Outlook/Hotmail**: `smtp.office365.com:587`
+- **Yahoo**: `smtp.mail.yahoo.com:587`
+- **SendGrid**: Use `EMAIL_PROVIDER=sendgrid` with `SENDGRID_API_KEY`
+
+**Testing email:**
+```bash
+# Test email endpoint
+curl -X POST http://localhost:3001/api/email/test \
+  -H "Content-Type: application/json" \
+  -d '{"email":"your@email.com","type":"confirmation"}'
+```
+
+**Common issues:**
+- If you see "SMTP transporter not initialized", check that all SMTP env vars are set
+- For Gmail "Less secure app" errors, use an App Password instead
+- If emails aren't sending, check logs for SMTP connection errors
 
 ### Puppeteer issues in Docker
 The Dockerfile includes Chromium installation for Alpine Linux. If you encounter issues:
