@@ -66,6 +66,7 @@ export class EmailService {
         host: trimmedHost,
         port: smtpPort,
         secure: smtpSecure, // true for 465, false for other ports
+        requireTLS: !smtpSecure, // Require TLS for port 587, not needed for SSL 465
         auth: {
           user: trimmedUser,
           pass: trimmedPass,
@@ -74,9 +75,16 @@ export class EmailService {
         connectionTimeout: 10000, // 10 seconds
         greetingTimeout: 10000,
         socketTimeout: 10000,
+        // Add TLS options for better compatibility
+        tls: {
+          rejectUnauthorized: true,
+          minVersion: 'TLSv1.2',
+        },
+        logger: true, // Enable detailed logging
+        debug: true, // Enable debug output
       });
 
-      this.logger.log(`SMTP transporter initialized: ${trimmedHost}:${smtpPort} (secure: ${smtpSecure})`);
+      this.logger.log(`SMTP transporter initialized: ${trimmedHost}:${smtpPort} (secure: ${smtpSecure}, requireTLS: ${!smtpSecure})`);
     } catch (error) {
       this.logger.error('Failed to initialize SMTP transporter:', error);
     }
@@ -92,12 +100,13 @@ export class EmailService {
 
     try {
       await this.smtpTransporter.verify();
+      const portRaw = this.configService.get<string>('SMTP_PORT', '587');
       return {
         success: true,
         message: 'SMTP connection verified successfully!',
         details: {
           host: this.configService.get<string>('SMTP_HOST')?.trim(),
-          port: this.configService.get<number>('SMTP_PORT', 587),
+          port: parseInt(portRaw, 10) || 587,
           user: this.configService.get<string>('SMTP_USER')?.trim(),
         },
       };
