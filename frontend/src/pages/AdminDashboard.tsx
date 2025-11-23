@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Grant, statusColors } from "../data/grants";
 import { grantsApi } from "../api/grants";
 import { scraperApi, ScrapeResult, GrantSource } from "../api/scraper";
+import { useAdminAuth } from "../contexts/AdminAuthContext";
+import { LogOut } from "lucide-react";
 
 const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { logout } = useAdminAuth();
+
   const [grants, setGrants] = useState<Grant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +78,11 @@ const AdminDashboard: React.FC = () => {
     setEditing(null);
     setIsNew(false);
     setSaving(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/admin/login');
   };
 
   const saveGrant = async () => {
@@ -243,12 +254,22 @@ const AdminDashboard: React.FC = () => {
               Manage grant programs from your Web3 Grants Aggregator backend.
             </p>
           </div>
-          <button
-            onClick={openNew}
-            className="px-4 py-2 rounded-xl bg-amber-400 text-black text-xs font-semibold hover:bg-amber-300 shadow-md"
-          >
-            + Add new grant
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={openNew}
+              className="px-4 py-2 rounded-xl bg-amber-400 text-black text-xs font-semibold hover:bg-amber-300 shadow-md"
+            >
+              + Add new grant
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-gray-200 text-xs font-semibold transition-all backdrop-blur-sm flex items-center gap-2"
+              title="Logout"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Logout
+            </button>
+          </div>
         </header>
 
         {error && (

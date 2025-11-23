@@ -1,5 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-const ADMIN_API_KEY = import.meta.env.VITE_ADMIN_API_KEY || "admin-secret-key-12345";
+
+// Get API key from session storage (set by auth context) or fall back to env var
+const getApiKey = (): string => {
+  return sessionStorage.getItem('admin_api_key') || import.meta.env.VITE_ADMIN_API_KEY || "admin-secret-key-12345";
+};
 
 export interface ScrapeResult {
   sources_scraped: number;
@@ -40,7 +44,7 @@ export const scraperApi = {
     const response = await fetch(`${API_BASE_URL}/scraper/run`, {
       method: "POST",
       headers: {
-        "x-admin-api-key": ADMIN_API_KEY,
+        "x-admin-api-key": getApiKey(),
       },
     });
 
@@ -57,7 +61,7 @@ export const scraperApi = {
     const response = await fetch(`${API_BASE_URL}/scraper/sources/${sourceId}/scrape`, {
       method: "POST",
       headers: {
-        "x-admin-api-key": ADMIN_API_KEY,
+        "x-admin-api-key": getApiKey(),
       },
     });
 
@@ -73,7 +77,7 @@ export const scraperApi = {
   async getSources(): Promise<GrantSource[]> {
     const response = await fetch(`${API_BASE_URL}/scraper/sources`, {
       headers: {
-        "x-admin-api-key": ADMIN_API_KEY,
+        "x-admin-api-key": getApiKey(),
       },
     });
 
@@ -89,7 +93,7 @@ export const scraperApi = {
   async getLogs(): Promise<ScraperLog[]> {
     const response = await fetch(`${API_BASE_URL}/scraper/logs`, {
       headers: {
-        "x-admin-api-key": ADMIN_API_KEY,
+        "x-admin-api-key": getApiKey(),
       },
     });
 
