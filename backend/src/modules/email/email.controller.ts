@@ -1,8 +1,12 @@
 import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { IsEmail, IsIn } from 'class-validator';
 import { EmailService } from './email.service';
 
 class TestEmailDto {
+  @IsEmail()
   email: string;
+
+  @IsIn(['confirmation', 'deadline', 'update'])
   type: 'confirmation' | 'deadline' | 'update';
 }
 
