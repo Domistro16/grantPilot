@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Body, BadRequestException } from '@nestjs/common';
 import { IsEmail, IsIn } from 'class-validator';
 import { EmailService } from './email.service';
 
@@ -13,6 +13,11 @@ class TestEmailDto {
 @Controller('email')
 export class EmailController {
   constructor(private readonly emailService: EmailService) {}
+
+  @Get('verify')
+  async verifyConnection() {
+    return this.emailService.verifyConnection();
+  }
 
   @Post('test')
   async testEmail(@Body() dto: TestEmailDto) {
