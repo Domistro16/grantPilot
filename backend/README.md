@@ -328,6 +328,10 @@ curl -X POST http://localhost:3001/api/email/test \
 - If you see "SMTP transporter not initialized", check that all SMTP env vars are set
 - For Gmail "Less secure app" errors, use an App Password instead
 - If emails aren't sending, check logs for SMTP connection errors
+- **CRITICAL:** If connecting to port 465 instead of 587, check your `SMTP_SECURE` value:
+  - ❌ Wrong: `SMTP_SECURE="false"` (quotes) or `SMTP_SECURE=false ` (trailing space)
+  - ✅ Correct: `SMTP_SECURE=false` (no quotes, no spaces)
+  - Environment variables are strings - "false" as a string evaluates to true!
 
 ### Puppeteer issues in Docker
 The Dockerfile includes Chromium installation for Alpine Linux. If you encounter issues:

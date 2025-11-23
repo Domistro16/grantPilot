@@ -34,16 +34,20 @@ export class EmailService {
 
   private initializeSMTP() {
     const smtpHost = this.configService.get<string>('SMTP_HOST');
-    const smtpPort = this.configService.get<number>('SMTP_PORT', 587);
+    const smtpPortRaw = this.configService.get<string>('SMTP_PORT', '587');
     const smtpUser = this.configService.get<string>('SMTP_USER');
     const smtpPass = this.configService.get<string>('SMTP_PASS');
-    const smtpSecure = this.configService.get<boolean>('SMTP_SECURE', false);
+    const smtpSecureRaw = this.configService.get<string>('SMTP_SECURE', 'false');
+
+    // Parse port and secure properly from environment variables (which are always strings)
+    const smtpPort = parseInt(smtpPortRaw, 10) || 587;
+    const smtpSecure = smtpSecureRaw === 'true' || smtpSecureRaw === '1';
 
     // Debug logging to help diagnose configuration issues
-    this.logger.debug(`SMTP Configuration:`);
+    this.logger.debug(`SMTP Configuration (raw values from env):`);
     this.logger.debug(`  Host: ${smtpHost ? `${smtpHost} (length: ${smtpHost.length})` : 'NOT SET'}`);
-    this.logger.debug(`  Port: ${smtpPort}`);
-    this.logger.debug(`  Secure: ${smtpSecure}`);
+    this.logger.debug(`  Port (raw): "${smtpPortRaw}" -> parsed: ${smtpPort}`);
+    this.logger.debug(`  Secure (raw): "${smtpSecureRaw}" -> parsed: ${smtpSecure}`);
     this.logger.debug(`  User: ${smtpUser ? `${smtpUser} (length: ${smtpUser.length})` : 'NOT SET'}`);
     this.logger.debug(`  Pass: ${smtpPass ? `***${smtpPass.slice(-4)} (length: ${smtpPass.length})` : 'NOT SET'}`);
 
@@ -72,7 +76,7 @@ export class EmailService {
         socketTimeout: 10000,
       });
 
-      this.logger.log(`SMTP transporter initialized: ${trimmedHost}:${smtpPort}`);
+      this.logger.log(`SMTP transporter initialized: ${trimmedHost}:${smtpPort} (secure: ${smtpSecure})`);
     } catch (error) {
       this.logger.error('Failed to initialize SMTP transporter:', error);
     }
