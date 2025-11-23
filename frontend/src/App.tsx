@@ -1,8 +1,11 @@
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import GrantPilotDashboard from "./GrantPilotDashboard";
 import { AdminDashboard } from "./pages";
+import { AdminLogin } from "./pages/AdminLogin";
 import { Settings } from "lucide-react";
 import { WalletProvider } from "./components/WalletProvider";
+import { AdminAuthProvider } from "./contexts/AdminAuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Navigation() {
   const location = useLocation();
@@ -33,13 +36,23 @@ function Navigation() {
 function App() {
   return (
     <WalletProvider>
-      <BrowserRouter>
-        <Navigation />
-        <Routes>
-          <Route path="/" element={<GrantPilotDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-        </Routes>
-      </BrowserRouter>
+      <AdminAuthProvider>
+        <BrowserRouter>
+          <Navigation />
+          <Routes>
+            <Route path="/" element={<GrantPilotDashboard />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AdminAuthProvider>
     </WalletProvider>
   );
 }

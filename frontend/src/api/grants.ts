@@ -1,7 +1,11 @@
 import { Grant } from "../data/grants";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-const ADMIN_API_KEY = import.meta.env.VITE_ADMIN_API_KEY || "admin-secret-key-12345";
+
+// Get API key from session storage (set by auth context) or fall back to env var
+const getApiKey = (): string => {
+  return sessionStorage.getItem('admin_api_key') || import.meta.env.VITE_ADMIN_API_KEY || "admin-secret-key-12345";
+};
 
 interface CreateGrantData {
   chain: string;
@@ -58,7 +62,7 @@ export const grantsApi = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-admin-api-key": ADMIN_API_KEY,
+        "x-admin-api-key": getApiKey(),
       },
       body: JSON.stringify(data),
     });
@@ -77,7 +81,7 @@ export const grantsApi = {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "x-admin-api-key": ADMIN_API_KEY,
+        "x-admin-api-key": getApiKey(),
       },
       body: JSON.stringify(data),
     });
@@ -95,7 +99,7 @@ export const grantsApi = {
     const response = await fetch(`${API_BASE_URL}/grants/${id}`, {
       method: "DELETE",
       headers: {
-        "x-admin-api-key": ADMIN_API_KEY,
+        "x-admin-api-key": getApiKey(),
       },
     });
 
