@@ -12,6 +12,10 @@ const AdminDashboard: React.FC = () => {
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
+
   // Scraper state
   const [scraping, setScraping] = useState(false);
   const [scrapeResult, setScrapeResult] = useState<ScrapeResult | null>(null);
@@ -126,6 +130,67 @@ const AdminDashboard: React.FC = () => {
 
   const handleFieldChange = (field: keyof Grant, value: string) => {
     setEditing((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.size === grants.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(grants.map(g => g.id)));
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // Bulk actions
+  const bulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    const count = selectedIds.size;
+    if (!window.confirm(`Are you sure you want to delete ${count} grant(s)?`)) return;
+
+    try {
+      setError(null);
+      // Delete each selected grant
+      await Promise.all(
+        Array.from(selectedIds).map(id => grantsApi.delete(id))
+      );
+      await loadGrants();
+      setSelectedIds(new Set());
+      setShowBulkActions(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete grants");
+      console.error("Error deleting grants:", err);
+    }
+  };
+
+  const bulkUpdateStatus = async (status: "Open" | "Upcoming" | "Closed") => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      setError(null);
+      // Update status for each selected grant
+      await Promise.all(
+        Array.from(selectedIds).map(id =>
+          grantsApi.update(id, { status })
+        )
+      );
+      await loadGrants();
+      setSelectedIds(new Set());
+      setShowBulkActions(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update grant status");
+      console.error("Error updating grants:", err);
+    }
   };
 
   // Scraper functions
@@ -332,9 +397,77 @@ const AdminDashboard: React.FC = () => {
         </section>
 
         <section className="rounded-2xl bg-black/40 border border-white/10 p-4 overflow-x-auto">
+          {/* Bulk Actions Bar */}
+          {selectedIds.size > 0 && (
+            <div className="mb-4 rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <p className="text-[11px] font-semibold text-amber-300">
+                  {selectedIds.size} grant{selectedIds.size !== 1 ? 's' : ''} selected
+                </p>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-[10px] text-amber-200 hover:text-amber-100 underline"
+                >
+                  Clear selection
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowBulkActions(!showBulkActions)}
+                  className="px-3 py-1.5 rounded-lg border border-white/20 text-[11px] text-gray-100 hover:bg-white/10"
+                >
+                  {showBulkActions ? 'Hide' : 'Show'} Actions
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bulk Actions Menu */}
+          {selectedIds.size > 0 && showBulkActions && (
+            <div className="mb-4 rounded-xl bg-white/5 border border-white/10 p-3">
+              <p className="text-[11px] font-semibold text-gray-300 mb-2">Bulk Actions</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => bulkUpdateStatus("Open")}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 text-[11px] hover:bg-emerald-500/20"
+                >
+                  Mark as Open
+                </button>
+                <button
+                  onClick={() => bulkUpdateStatus("Upcoming")}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-300 text-[11px] hover:bg-amber-500/20"
+                >
+                  Mark as Upcoming
+                </button>
+                <button
+                  onClick={() => bulkUpdateStatus("Closed")}
+                  className="px-3 py-1.5 rounded-lg bg-gray-500/10 border border-gray-500/40 text-gray-300 text-[11px] hover:bg-gray-500/20"
+                >
+                  Mark as Closed
+                </button>
+                <div className="ml-auto">
+                  <button
+                    onClick={bulkDelete}
+                    className="px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/60 text-rose-200 text-[11px] hover:bg-rose-500/20"
+                  >
+                    Delete Selected
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <table className="w-full text-left text-xs">
             <thead className="text-[11px] uppercase tracking-wide text-gray-400 border-b border-white/10">
               <tr>
+                <th className="py-2 pr-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={grants.length > 0 && selectedIds.size === grants.length}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-white/20 bg-black/40 text-amber-400 focus:ring-amber-400 focus:ring-offset-0 cursor-pointer"
+                  />
+                </th>
                 <th className="py-2 pr-3">Title</th>
                 <th className="py-2 pr-3">Chain</th>
                 <th className="py-2 pr-3">Category</th>
@@ -346,7 +479,20 @@ const AdminDashboard: React.FC = () => {
             </thead>
             <tbody className="align-top">
               {grants.map((g) => (
-                <tr key={g.id} className="border-b border-white/5 last:border-none">
+                <tr
+                  key={g.id}
+                  className={`border-b border-white/5 last:border-none transition-colors ${
+                    selectedIds.has(g.id) ? 'bg-amber-500/5' : ''
+                  }`}
+                >
+                  <td className="py-2 pr-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(g.id)}
+                      onChange={() => toggleSelect(g.id)}
+                      className="w-4 h-4 rounded border-white/20 bg-black/40 text-amber-400 focus:ring-amber-400 focus:ring-offset-0 cursor-pointer"
+                    />
+                  </td>
                   <td className="py-2 pr-3 font-medium text-gray-100 max-w-[220px] truncate">{g.title}</td>
                   <td className="py-2 pr-3 text-gray-300">{g.chain}</td>
                   <td className="py-2 pr-3 text-gray-300">{g.category}</td>

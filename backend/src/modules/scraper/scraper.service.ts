@@ -360,15 +360,19 @@ For EACH grant program mentioned, return a JSON object with these exact fields:
   "summary": "2-3 sentences describing what the grant supports",
   "focus": "1-2 sentences on ideal applicant profile/requirements",
   "link": "${sourceUrl}",
-  "fit_score": "OPTIONAL - short assessment like 'Strong for DeFi builders' or 'Good for early-stage teams' or 'Ideal for infrastructure projects'",
-  "fit_description": "OPTIONAL - 1 sentence explaining who this grant is best suited for",
-  "time_to_apply": "OPTIONAL - estimated time like '30-45 minutes' or '2-3 hours' or '1-2 weeks'",
-  "time_to_apply_description": "OPTIONAL - 1 sentence about what's needed (e.g., 'Requires pitch deck and metrics' or 'Simple online form')"
+  "fit_score": "REQUIRED - assess who this is best for. Examples: 'Strong for DeFi builders', 'Best for early-stage teams', 'Ideal for infrastructure projects', 'Great for established protocols'",
+  "fit_description": "REQUIRED - 1 sentence explaining the ideal applicant. Examples: 'Best suited for teams with product-market fit', 'Perfect for developers building on-chain tools', 'Targets projects seeking ecosystem grants'",
+  "time_to_apply": "REQUIRED - realistic time estimate. Examples: '15-30 minutes' (simple form), '1-2 hours' (detailed proposal), '1-2 weeks' (full application with deck), '2-4 weeks' (comprehensive grant with milestones)",
+  "time_to_apply_description": "REQUIRED - 1 sentence about application complexity. Examples: 'Quick online form with project description', 'Requires pitch deck and team info', 'Needs detailed proposal with milestones', 'Application review process included'"
 }
 
-IMPORTANT: The fit_score, fit_description, time_to_apply, and time_to_apply_description fields are OPTIONAL.
-Only include them if you can make a reasonable estimate based on the grant requirements and application process described in the content.
-If the information is not available, omit these fields from the JSON.
+IMPORTANT GUIDELINES FOR REQUIRED FIELDS:
+- fit_score: Make a reasonable assessment based on the grant type, category, and chain. Be specific about the target audience.
+- fit_description: Infer from the grant focus, category, and requirements. Every grant has an ideal applicant profile.
+- time_to_apply: Estimate based on application complexity. Simple forms = 15-30min, Standard applications = 1-2 hours, Comprehensive grants = 1-4 weeks.
+- time_to_apply_description: Describe what's typically needed. If not explicitly stated, infer from grant size and type (larger grants need more documentation).
+
+Even if these details aren't explicitly stated in the content, use your knowledge of typical grant applications to provide reasonable estimates.
 
 If multiple grants exist on this page, return an array of JSON objects: [grant1, grant2, ...]
 If no grant information is found, return: { "error": "No grant data found" }
@@ -451,11 +455,11 @@ Return ONLY valid JSON. No markdown, no explanations.`;
           tag: grantData.tag,
           category: grantData.category,
           source_url: sourceUrl,
-          // Use extracted values, fallback to existing, then null
-          fit_score: grantData.fit_score || existing.fit_score || null,
-          fit_description: grantData.fit_description || existing.fit_description || null,
-          time_to_apply: grantData.time_to_apply || existing.time_to_apply || null,
-          time_to_apply_description: grantData.time_to_apply_description || existing.time_to_apply_description || null,
+          // Use extracted values, fallback to existing, then generate defaults
+          fit_score: grantData.fit_score || existing.fit_score || this.generateDefaultFitScore(grantData),
+          fit_description: grantData.fit_description || existing.fit_description || this.generateDefaultFitDescription(grantData),
+          time_to_apply: grantData.time_to_apply || existing.time_to_apply || this.generateDefaultTimeToApply(grantData),
+          time_to_apply_description: grantData.time_to_apply_description || existing.time_to_apply_description || this.generateDefaultTimeDescription(grantData),
         });
         this.logger.debug(`Updated grant: ${grantData.title}`);
       }
@@ -479,15 +483,76 @@ Return ONLY valid JSON. No markdown, no explanations.`;
         focus: grantData.focus,
         link: grantData.link || sourceUrl,
         source_url: sourceUrl,
-        // Use extracted values from GPT-4, or null if not provided
-        fit_score: grantData.fit_score || null,
-        fit_description: grantData.fit_description || null,
-        time_to_apply: grantData.time_to_apply || null,
-        time_to_apply_description: grantData.time_to_apply_description || null,
+        // Use extracted values from GPT-4, or generate intelligent defaults
+        fit_score: grantData.fit_score || this.generateDefaultFitScore(grantData),
+        fit_description: grantData.fit_description || this.generateDefaultFitDescription(grantData),
+        time_to_apply: grantData.time_to_apply || this.generateDefaultTimeToApply(grantData),
+        time_to_apply_description: grantData.time_to_apply_description || this.generateDefaultTimeDescription(grantData),
       });
       this.logger.debug(`Added new grant: ${grantData.title}`);
 
       return true; // New grant
+    }
+  }
+
+  /**
+   * Generate default fit_score based on category and chain
+   */
+  private generateDefaultFitScore(grantData: ExtractedGrant): string {
+    const category = grantData.category.toLowerCase();
+
+    if (category.includes('defi')) return 'Strong for DeFi protocols';
+    if (category.includes('gaming')) return 'Ideal for game developers';
+    if (category.includes('infra')) return 'Best for infrastructure builders';
+    if (category.includes('consumer')) return 'Great for consumer apps';
+    if (category.includes('tooling')) return 'Perfect for developer tools';
+    if (category.includes('public goods')) return 'Suited for public good projects';
+    if (category.includes('zk')) return 'Strong for ZK projects';
+    if (category.includes('l2')) return 'Ideal for Layer 2 teams';
+
+    return `Suited for ${grantData.chain} builders`;
+  }
+
+  /**
+   * Generate default fit_description
+   */
+  private generateDefaultFitDescription(grantData: ExtractedGrant): string {
+    return `Best suited for teams building in the ${grantData.category} category on ${grantData.chain}`;
+  }
+
+  /**
+   * Generate default time_to_apply based on amount
+   */
+  private generateDefaultTimeToApply(grantData: ExtractedGrant): string {
+    const amount = grantData.amount.toLowerCase();
+
+    // Large grants (>$50k) typically need more time
+    if (amount.includes('100k') || amount.includes('150k') || amount.includes('200k') ||
+        amount.includes('250k') || amount.includes('500k') || amount.includes('1m')) {
+      return '1-2 weeks';
+    }
+
+    // Medium grants ($10k-$50k)
+    if (amount.includes('50k') || amount.includes('25k') || amount.includes('30k')) {
+      return '2-4 hours';
+    }
+
+    // Small grants or "Varies"
+    return '1-2 hours';
+  }
+
+  /**
+   * Generate default time_to_apply_description
+   */
+  private generateDefaultTimeDescription(grantData: ExtractedGrant): string {
+    const timeToApply = this.generateDefaultTimeToApply(grantData);
+
+    if (timeToApply.includes('week')) {
+      return 'Requires detailed proposal with milestones and team information';
+    } else if (timeToApply.includes('4 hours')) {
+      return 'Standard application with project details and pitch deck';
+    } else {
+      return 'Online application form with project description';
     }
   }
 
