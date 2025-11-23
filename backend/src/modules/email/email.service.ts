@@ -39,25 +39,74 @@ export class EmailService {
     const smtpPass = this.configService.get<string>('SMTP_PASS');
     const smtpSecure = this.configService.get<boolean>('SMTP_SECURE', false);
 
+    // Debug logging to help diagnose configuration issues
+    this.logger.debug(`SMTP Configuration:`);
+    this.logger.debug(`  Host: ${smtpHost ? `${smtpHost} (length: ${smtpHost.length})` : 'NOT SET'}`);
+    this.logger.debug(`  Port: ${smtpPort}`);
+    this.logger.debug(`  Secure: ${smtpSecure}`);
+    this.logger.debug(`  User: ${smtpUser ? `${smtpUser} (length: ${smtpUser.length})` : 'NOT SET'}`);
+    this.logger.debug(`  Pass: ${smtpPass ? `***${smtpPass.slice(-4)} (length: ${smtpPass.length})` : 'NOT SET'}`);
+
     if (!smtpHost || !smtpUser || !smtpPass) {
       this.logger.warn('SMTP credentials not configured. Emails will be logged to console.');
       return;
     }
 
+    // Trim values to remove any whitespace or hidden characters
+    const trimmedHost = smtpHost.trim();
+    const trimmedUser = smtpUser.trim();
+    const trimmedPass = smtpPass.trim();
+
     try {
       this.smtpTransporter = nodemailer.createTransport({
-        host: smtpHost,
+        host: trimmedHost,
         port: smtpPort,
         secure: smtpSecure, // true for 465, false for other ports
         auth: {
-          user: smtpUser,
-          pass: smtpPass,
+          user: trimmedUser,
+          pass: trimmedPass,
         },
+        // Add connection timeout and other options
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
       });
 
-      this.logger.log(`SMTP transporter initialized: ${smtpHost}:${smtpPort}`);
+      this.logger.log(`SMTP transporter initialized: ${trimmedHost}:${smtpPort}`);
     } catch (error) {
       this.logger.error('Failed to initialize SMTP transporter:', error);
+    }
+  }
+
+  async verifyConnection(): Promise<{ success: boolean; message: string; details?: any }> {
+    if (!this.smtpTransporter) {
+      return {
+        success: false,
+        message: 'SMTP transporter not initialized. Check your EMAIL_PROVIDER and SMTP credentials.',
+      };
+    }
+
+    try {
+      await this.smtpTransporter.verify();
+      return {
+        success: true,
+        message: 'SMTP connection verified successfully!',
+        details: {
+          host: this.configService.get<string>('SMTP_HOST')?.trim(),
+          port: this.configService.get<number>('SMTP_PORT', 587),
+          user: this.configService.get<string>('SMTP_USER')?.trim(),
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'SMTP connection failed',
+        details: {
+          error: error.message,
+          code: error.code,
+          command: error.command,
+        },
+      };
     }
   }
 
