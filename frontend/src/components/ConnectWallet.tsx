@@ -3,6 +3,7 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Wallet, X } from 'lucide-react';
+import { useENSName } from '../hooks/useENSName';
 
 type ConnectionStep = 'initial' | 'evm' | 'solana' | 'connected';
 
@@ -17,6 +18,11 @@ export function ConnectWallet() {
 
   // Solana wallet state
   const { publicKey: solanaAddress, connected: isSolanaConnected, disconnect: disconnectSolana } = useWallet();
+
+  // .safu domain name resolution for EVM address
+  const { name: safuName, loading: safuLoading } = useENSName({
+    owner: evmAddress as `0x${string}` | undefined
+  });
 
   const bothConnected = isEvmConnected && isSolanaConnected;
 
@@ -51,6 +57,13 @@ export function ConnectWallet() {
     return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
   };
 
+  const getDisplayName = () => {
+    if (safuName && !safuLoading) {
+      return safuName;
+    }
+    return evmAddress ? formatAddress(evmAddress) : '';
+  };
+
   const openConnectFlow = () => {
     if (isEvmConnected && !isSolanaConnected) {
       setStep('solana');
@@ -67,7 +80,13 @@ export function ConnectWallet() {
     return (
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 rounded-full text-xs">
-          <span className="font-mono">{formatAddress(evmAddress)}</span>
+          <span className={`${safuName ? '' : 'font-mono'}`}>
+            {safuLoading ? (
+              <span className="inline-block animate-pulse">Loading...</span>
+            ) : (
+              getDisplayName()
+            )}
+          </span>
           <span className="text-emerald-400">•</span>
           <span className="font-mono">{formatAddress(solanaAddress.toString())}</span>
         </div>
@@ -140,7 +159,14 @@ export function ConnectWallet() {
               <div>
                 <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                   <p className="text-sm text-emerald-300">
-                    ✓ EVM Wallet Connected: {evmAddress && formatAddress(evmAddress)}
+                    ✓ EVM Wallet Connected:{' '}
+                    {safuLoading ? (
+                      <span className="inline-block animate-pulse">Loading name...</span>
+                    ) : safuName ? (
+                      <span className="font-semibold">{safuName}</span>
+                    ) : (
+                      evmAddress && formatAddress(evmAddress)
+                    )}
                   </p>
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-4">
