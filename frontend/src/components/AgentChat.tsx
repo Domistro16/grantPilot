@@ -17,7 +17,6 @@ export function AgentChat({ grant }: AgentChatProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sessionId] = useState<string>(() => crypto.randomUUID());
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
