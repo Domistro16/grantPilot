@@ -8,6 +8,7 @@ export interface Message {
 export interface ChatRequest {
   grant_id: number;
   user_message: string;
+  wallet_address: string;
   conversation_history?: Message[];
 }
 

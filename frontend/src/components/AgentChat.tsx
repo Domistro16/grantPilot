@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { agentApi, Message } from "../api/agent";
 import { Grant } from "../data/grants";
 import { useTokenGate } from "../hooks/useTokenGate";
@@ -11,6 +12,7 @@ interface AgentChatProps {
 }
 
 export function AgentChat({ grant }: AgentChatProps) {
+  const { publicKey } = useWallet();
   const [messages, setMessages] = useState<(Message & { timestamp: Date })[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,10 +72,16 @@ export function AgentChat({ grant }: AgentChatProps) {
     try {
       setLoading(true);
 
+      // Ensure we have a wallet address
+      if (!publicKey) {
+        throw new Error('Wallet not connected');
+      }
+
       // Call agent API
       const response = await agentApi.chat({
         grant_id: grant.id,
         user_message: userMessage,
+        wallet_address: publicKey.toBase58(),
         conversation_history: messages.map(m => ({
           role: m.role,
           content: m.content,
