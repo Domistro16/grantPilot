@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -110,7 +111,7 @@ export function ConnectWallet() {
       </button>
 
       {/* Connection Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 z-[999] flex items-start justify-center pt-32 bg-black/50 backdrop-blur-sm">
           <div className="bg-[#0a0e27] border border-white/10 rounded-2xl w-full max-w-md p-6 relative">
             <button
@@ -191,7 +192,8 @@ export function ConnectWallet() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
