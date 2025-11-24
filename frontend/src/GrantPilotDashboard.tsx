@@ -38,6 +38,14 @@ export default function GrantPilotDashboard() {
   const [subscribedGrants, setSubscribedGrants] = useState<Set<number>>(new Set());
   const [detailOpen, setDetailOpen] = useState(false);
 
+  // Subscription modal state
+  const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
+  const [subscribeEmail, setSubscribeEmail] = useState("");
+  const [subscribeStatus, setSubscribeStatus] = useState<{
+    type: 'idle' | 'success' | 'error';
+    message: string;
+  }>({ type: 'idle', message: '' });
+
   // Loading and error states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -148,39 +156,56 @@ export default function GrantPilotDashboard() {
   const chainOptions = ["All", ...chains.map(c => c.name)];
   const categoryOptions = ["All", ...categories.map(c => c.name)];
 
-  // Handle subscription
-  const handleSubscribe = async () => {
+  // Handle subscription - open modal
+  const handleSubscribe = () => {
     if (!selected) return;
+    setSubscribeModalOpen(true);
+    setSubscribeEmail("");
+    setSubscribeStatus({ type: 'idle', message: '' });
+  };
 
-    // Prompt for email
-    const email = prompt("Enter your email to subscribe to updates for this grant:");
-    if (!email) return;
+  // Submit subscription
+  const submitSubscription = async () => {
+    if (!selected) return;
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      alert("Please enter a valid email address.");
+    if (!emailRegex.test(subscribeEmail)) {
+      setSubscribeStatus({ type: 'error', message: 'Please enter a valid email address.' });
       return;
     }
 
     try {
       setSubscribing(true);
-      const result = await grantsApi.subscribe(email, selected.id);
+      setSubscribeStatus({ type: 'idle', message: '' });
+      const result = await grantsApi.subscribe(subscribeEmail, selected.id);
 
       if (result.success) {
         setSubscribedGrants(prev => new Set(prev).add(selected.id));
-        alert(`Success! You're subscribed to updates for "${selected.title}"`);
+        setSubscribeStatus({
+          type: 'success',
+          message: `Success! You're subscribed to updates for "${selected.title}"`
+        });
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          setSubscribeModalOpen(false);
+        }, 2000);
       } else {
-        alert(result.message || "Subscription successful!");
         setSubscribedGrants(prev => new Set(prev).add(selected.id));
+        setSubscribeStatus({
+          type: 'success',
+          message: result.message || 'Subscription successful!'
+        });
+        setTimeout(() => {
+          setSubscribeModalOpen(false);
+        }, 2000);
       }
     } catch (err) {
       console.error("Subscription error:", err);
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Failed to subscribe. Please try again."
-      );
+      setSubscribeStatus({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to subscribe. Please try again.'
+      });
     } finally {
       setSubscribing(false);
     }
@@ -643,6 +668,89 @@ export default function GrantPilotDashboard() {
                 </button>
               </div>
               <AgentChat grant={selected} />
+            </div>
+          </div>
+        )}
+
+        {/* SUBSCRIPTION MODAL */}
+        {subscribeModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="bg-gradient-to-br from-[#0a1628] to-[#050b1a] rounded-2xl border border-white/10 shadow-2xl max-w-md w-full p-6">
+              {/* Header */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-white mb-1">
+                  Subscribe to Grant Updates
+                </h3>
+                <p className="text-sm text-gray-400">
+                  Get notified about deadlines and status changes for{" "}
+                  <span className="text-amber-400 font-medium">{selected?.title}</span>
+                </p>
+              </div>
+
+              {/* Email Input */}
+              <div className="mb-4">
+                <label htmlFor="subscribe-email" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <input
+                  id="subscribe-email"
+                  type="email"
+                  value={subscribeEmail}
+                  onChange={(e) => setSubscribeEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !subscribing) {
+                      submitSubscription();
+                    }
+                  }}
+                  placeholder="your.email@example.com"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  disabled={subscribing || subscribeStatus.type === 'success'}
+                  autoFocus
+                />
+              </div>
+
+              {/* Status Messages */}
+              {subscribeStatus.type === 'error' && (
+                <div className="mb-4 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2.5">
+                  <p className="text-sm text-rose-300">{subscribeStatus.message}</p>
+                </div>
+              )}
+
+              {subscribeStatus.type === 'success' && (
+                <div className="mb-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2.5">
+                  <p className="text-sm text-emerald-300">{subscribeStatus.message}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setSubscribeModalOpen(false)}
+                  disabled={subscribing}
+                  className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-300 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitSubscription}
+                  disabled={subscribing || !subscribeEmail || subscribeStatus.type === 'success'}
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-xl text-white text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
+                >
+                  {subscribing ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Subscribing...
+                    </span>
+                  ) : subscribeStatus.type === 'success' ? (
+                    'Subscribed ✓'
+                  ) : (
+                    'Subscribe'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}
