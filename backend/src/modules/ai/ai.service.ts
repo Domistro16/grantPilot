@@ -40,7 +40,7 @@ Return ONLY valid JSON with these keys. No markdown, no explanation.
 ${content}`;
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-5-nano',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },

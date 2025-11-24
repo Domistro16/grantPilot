@@ -42,7 +42,7 @@ export class AgentService {
     try {
       // Call OpenAI API
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-5-nano',
         max_tokens: 1024,
         temperature: 0.7,
         messages: [
