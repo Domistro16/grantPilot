@@ -77,6 +77,12 @@ export function useTokenGate(): TokenGateState {
 
         const hasAccess = balance >= TOKEN_GATE_CONFIG.REQUIRED_AMOUNT;
 
+        console.log('[TokenGate] Balance check result:', {
+          balance,
+          required: TOKEN_GATE_CONFIG.REQUIRED_AMOUNT,
+          hasAccess,
+        });
+
         setState({
           hasAccess,
           balance,
@@ -86,11 +92,18 @@ export function useTokenGate(): TokenGateState {
         });
       } catch (err) {
         console.error('Error checking token balance:', err);
+
+        // If required amount is 0, grant access even if balance check fails
+        const hasAccessOnError = TOKEN_GATE_CONFIG.REQUIRED_AMOUNT === 0;
+
+        console.warn('[TokenGate] Balance check failed, required amount is', TOKEN_GATE_CONFIG.REQUIRED_AMOUNT,
+                     'granting access:', hasAccessOnError);
+
         setState({
-          hasAccess: false,
+          hasAccess: hasAccessOnError,
           balance: 0,
           loading: false,
-          error: err instanceof Error ? err.message : 'Failed to check token balance',
+          error: hasAccessOnError ? null : (err instanceof Error ? err.message : 'Failed to check token balance'),
           isConnected: true,
         });
       }
