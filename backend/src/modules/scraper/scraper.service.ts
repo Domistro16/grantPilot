@@ -383,7 +383,7 @@ Return ONLY valid JSON. No markdown, no explanations.`;
       const response = await this.openai.chat.completions.create({
         model: 'gpt-5-nano',
         temperature: 0.3,
-        max_tokens: 2000,
+        max_completion_tokens: 2000,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
