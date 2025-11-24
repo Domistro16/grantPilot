@@ -111,7 +111,7 @@ export function ConnectWallet() {
 
       {/* Connection Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-32 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[999] flex items-start justify-center pt-32 bg-black/50 backdrop-blur-sm">
           <div className="bg-[#0a0e27] border border-white/10 rounded-2xl w-full max-w-md p-6 relative">
             <button
               onClick={() => setShowModal(false)}

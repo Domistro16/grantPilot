@@ -469,6 +469,9 @@ export default function GrantPilotDashboard() {
               <p className="text-xs text-gray-400 mt-1">
                 Filter, compare and prep funding paths across ecosystems.
               </p>
+              <div className="mt-4">
+                <ConnectWallet />
+              </div>
             </section>
             <section className="bg-black/30 border border-white/10 p-4 rounded-2xl space-y-3">
               <div className="flex items-center justify-between text-[11px] text-gray-400">
