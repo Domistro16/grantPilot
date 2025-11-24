@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -19,6 +20,7 @@ export class EmailService {
   private readonly emailFromName: string;
   private readonly frontendUrl: string;
   private smtpTransporter: nodemailer.Transporter | null = null;
+  private resendClient: Resend | null = null;
 
   constructor(private configService: ConfigService) {
     this.emailProvider = this.configService.get<string>('EMAIL_PROVIDER', 'console');
@@ -29,6 +31,11 @@ export class EmailService {
     // Initialize SMTP transporter if SMTP is configured
     if (this.emailProvider === 'smtp') {
       this.initializeSMTP();
+    }
+
+    // Initialize Resend if configured
+    if (this.emailProvider === 'resend') {
+      this.initializeResend();
     }
   }
 
@@ -90,37 +97,89 @@ export class EmailService {
     }
   }
 
-  async verifyConnection(): Promise<{ success: boolean; message: string; details?: any }> {
-    if (!this.smtpTransporter) {
-      return {
-        success: false,
-        message: 'SMTP transporter not initialized. Check your EMAIL_PROVIDER and SMTP credentials.',
-      };
+  private initializeResend() {
+    const resendApiKey = this.configService.get<string>('RESEND_API_KEY');
+
+    if (!resendApiKey) {
+      this.logger.warn('RESEND_API_KEY not configured. Emails will be logged to console.');
+      return;
     }
 
     try {
-      await this.smtpTransporter.verify();
-      const portRaw = this.configService.get<string>('SMTP_PORT', '587');
-      return {
-        success: true,
-        message: 'SMTP connection verified successfully!',
-        details: {
-          host: this.configService.get<string>('SMTP_HOST')?.trim(),
-          port: parseInt(portRaw, 10) || 587,
-          user: this.configService.get<string>('SMTP_USER')?.trim(),
-        },
-      };
+      this.resendClient = new Resend(resendApiKey);
+      this.logger.log('Resend client initialized successfully');
     } catch (error) {
-      return {
-        success: false,
-        message: 'SMTP connection failed',
-        details: {
-          error: error.message,
-          code: error.code,
-          command: error.command,
-        },
-      };
+      this.logger.error('Failed to initialize Resend client:', error);
     }
+  }
+
+  async verifyConnection(): Promise<{ success: boolean; message: string; details?: any }> {
+    if (this.emailProvider === 'resend') {
+      if (!this.resendClient) {
+        return {
+          success: false,
+          message: 'Resend client not initialized. Check your RESEND_API_KEY.',
+        };
+      }
+
+      try {
+        // Resend doesn't have a verify method, so we just check if client is initialized
+        return {
+          success: true,
+          message: 'Resend client initialized successfully!',
+          details: {
+            provider: 'Resend',
+            from: this.emailFrom,
+          },
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: 'Resend verification failed',
+          details: {
+            error: error.message,
+          },
+        };
+      }
+    }
+
+    if (this.emailProvider === 'smtp') {
+      if (!this.smtpTransporter) {
+        return {
+          success: false,
+          message: 'SMTP transporter not initialized. Check your SMTP credentials.',
+        };
+      }
+
+      try {
+        await this.smtpTransporter.verify();
+        const portRaw = this.configService.get<string>('SMTP_PORT', '587');
+        return {
+          success: true,
+          message: 'SMTP connection verified successfully!',
+          details: {
+            host: this.configService.get<string>('SMTP_HOST')?.trim(),
+            port: parseInt(portRaw, 10) || 587,
+            user: this.configService.get<string>('SMTP_USER')?.trim(),
+          },
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: 'SMTP connection failed',
+          details: {
+            error: error.message,
+            code: error.code,
+            command: error.command,
+          },
+        };
+      }
+    }
+
+    return {
+      success: false,
+      message: `Email provider '${this.emailProvider}' does not support connection verification.`,
+    };
   }
 
   async sendSubscriptionConfirmation(email: string, grant: any, unsubscribeToken: string): Promise<boolean> {
@@ -254,6 +313,9 @@ export class EmailService {
       case 'smtp':
         await this.sendViaSMTP(options);
         break;
+      case 'resend':
+        await this.sendViaResend(options);
+        break;
       case 'console':
         this.sendViaConsole(options);
         break;
@@ -285,6 +347,34 @@ export class EmailService {
       this.logger.log(`Email sent via SMTP: ${info.messageId}`);
     } catch (error) {
       this.logger.error('Failed to send email via SMTP:', error);
+      throw error;
+    }
+  }
+
+  private async sendViaResend(options: EmailOptions): Promise<void> {
+    if (!this.resendClient) {
+      this.logger.error('Resend client not initialized. Falling back to console.');
+      this.sendViaConsole(options);
+      return;
+    }
+
+    try {
+      const { data, error } = await this.resendClient.emails.send({
+        from: `${this.emailFromName} <${this.emailFrom}>`,
+        to: [options.to],
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      });
+
+      if (error) {
+        this.logger.error('Failed to send email via Resend:', error);
+        throw new Error(error.message);
+      }
+
+      this.logger.log(`Email sent via Resend: ${data?.id}`);
+    } catch (error) {
+      this.logger.error('Failed to send email via Resend:', error);
       throw error;
     }
   }
