@@ -554,7 +554,7 @@ const AdminDashboard: React.FC = () => {
         <p className="text-[10px] text-gray-500">
           Connected to backend API at{" "}
           <span className="text-amber-400 font-mono">
-            {import.meta.env.VITE_API_URL || "http://localhost:3001/api"}
+            {(import.meta as any).env.VITE_API_URL || "http://localhost:3001/api"}
           </span>
         </p>
       </div>

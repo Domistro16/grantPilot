@@ -25,7 +25,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const login = async (key: string): Promise<boolean> => {
     try {
       // Verify the API key by making a test request to a protected endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/scraper/sources`, {
+      const baseUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${baseUrl}/scraper/sources`, {
         headers: {
           'x-admin-api-key': key,
         },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, Sparkles } from "lucide-react";
 import { grantsApi } from "./api/grants";
 import { Grant } from "./data/grants";
@@ -69,13 +69,15 @@ export default function GrantPilotDashboard() {
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
+        const apiBase =
+          ((import.meta as any).env && (import.meta as any).env.VITE_API_URL) ||
+          "http://localhost:3001/api";
+
         const [chainsData, categoriesData] = await Promise.all([
           grantsApi.getAll().then(() =>
-            fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3001/api"}/chains`)
-              .then(res => res.json())
+            fetch(`${apiBase}/chains`).then(res => res.json())
           ),
-          fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3001/api"}/categories`)
-            .then(res => res.json())
+          fetch(`${apiBase}/categories`).then(res => res.json())
         ]);
         setChains(chainsData);
         setCategories(categoriesData);

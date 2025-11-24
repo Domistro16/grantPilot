@@ -1,10 +1,15 @@
 import { Grant } from "../data/grants";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const API_BASE_URL =
+  (import.meta as any).env.VITE_API_URL || "http://localhost:3001/api";
 
 // Get API key from session storage (set by auth context) or fall back to env var
 const getApiKey = (): string => {
-  return sessionStorage.getItem('admin_api_key') || import.meta.env.VITE_ADMIN_API_KEY || "admin-secret-key-12345";
+  return (
+    sessionStorage.getItem("admin_api_key") ||
+    (import.meta as any).env.VITE_ADMIN_API_KEY ||
+    "admin-secret-key-12345"
+  );
 };
 
 interface CreateGrantData {
