@@ -380,17 +380,18 @@ If no grant information is found, return: { "error": "No grant data found" }
 Return ONLY valid JSON. No markdown, no explanations.`;
 
     try {
-      const response = await this.openai.chat.completions.create({
+      const response = await this.openai.responses.create({
         model: 'gpt-5-nano',
         temperature: 0.3,
-        max_completion_tokens: 2000,
-        messages: [
+          max_output_tokens: 2000,
+
+        input: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
       });
 
-      const rawResponse = response.choices[0]?.message?.content || '';
+      const rawResponse = response.output_text || '';
       this.logger.debug(`GPT-5 response: ${rawResponse.substring(0, 200)}...`);
 
       // Parse JSON response
