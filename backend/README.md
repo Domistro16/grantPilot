@@ -54,14 +54,21 @@ A NestJS-powered backend that automatically aggregates, organizes, and tracks gr
    CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
    # Email Configuration (Optional - defaults to console)
-   EMAIL_PROVIDER=smtp  # or 'console' for development
+   # RECOMMENDED FOR PRODUCTION: Use 'resend' (works best on Railway/cloud)
+   EMAIL_PROVIDER=resend  # Options: resend, smtp, console, sendgrid
    EMAIL_FROM=noreply@yourdomain.com
    EMAIL_FROM_NAME=GrantPilot
+
+   # Resend Configuration (recommended - sign up at https://resend.com)
+   RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+   # SMTP Configuration (alternative - may not work on Railway)
    SMTP_HOST=smtp.gmail.com
    SMTP_PORT=587
    SMTP_SECURE=false
    SMTP_USER=your_email@gmail.com
    SMTP_PASS=your_app_password  # For Gmail, use App Password
+
    FRONTEND_URL=http://localhost:5173
    ```
 
@@ -291,7 +298,8 @@ Currently scraping from:
 | `CORS_ORIGINS` | Allowed origins (comma-separated) | `http://localhost:3000,http://localhost:5173` |
 | `RATE_LIMIT_TTL` | Rate limit window (ms) | `900000` (15 min) |
 | `RATE_LIMIT_MAX` | Max requests per window | `100` |
-| `EMAIL_PROVIDER` | Email service provider | `smtp`, `console`, or `sendgrid` |
+| `EMAIL_PROVIDER` | Email service provider | `resend`, `smtp`, `console`, or `sendgrid` |
+| `RESEND_API_KEY` | Resend API key (if using resend) | `re_...` |
 | `EMAIL_FROM` | Sender email address | `noreply@yourdomain.com` |
 | `EMAIL_FROM_NAME` | Sender display name | `GrantPilot` |
 | `SMTP_HOST` | SMTP server hostname | `smtp.gmail.com` |
@@ -303,18 +311,40 @@ Currently scraping from:
 
 ## 🐛 Troubleshooting
 
-### Email/SMTP not working
+### Email not working
 
-**For Gmail users:**
+**⚠️ SMTP doesn't work on Railway/cloud platforms**
+
+If you're getting `ETIMEDOUT` or connection errors on Railway, it's because **Railway blocks SMTP ports** (25, 465, 587) to prevent spam.
+
+**✅ Solution: Use Resend (Recommended)**
+
+1. Sign up at https://resend.com (free tier: 3,000 emails/month)
+2. Get your API key from https://resend.com/api-keys
+3. Set environment variables in Railway:
+   ```
+   EMAIL_PROVIDER=resend
+   RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   EMAIL_FROM=noreply@yourdomain.com
+   ```
+4. Verify it works:
+   ```bash
+   curl https://your-app.railway.app/api/email/verify
+   ```
+
+**Alternative: SendGrid** (100 emails/day free)
+- Sign up at https://sendgrid.com
+- Get API key and set `EMAIL_PROVIDER=sendgrid` with `SENDGRID_API_KEY`
+
+**For local development with Gmail/SMTP:**
 1. Enable 2-Factor Authentication on your Google account
 2. Generate an App Password: https://myaccount.google.com/apppasswords
 3. Use the App Password as `SMTP_PASS` (not your regular password)
 4. Set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_SECURE=false`
 
-**For other providers:**
+**Other SMTP providers (local only):**
 - **Outlook/Hotmail**: `smtp.office365.com:587`
 - **Yahoo**: `smtp.mail.yahoo.com:587`
-- **SendGrid**: Use `EMAIL_PROVIDER=sendgrid` with `SENDGRID_API_KEY`
 
 **Testing email:**
 ```bash
