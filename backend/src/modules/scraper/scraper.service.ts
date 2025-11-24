@@ -381,7 +381,7 @@ Return ONLY valid JSON. No markdown, no explanations.`;
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-5-nano',
         temperature: 0.3,
         max_tokens: 2000,
         messages: [
@@ -391,7 +391,7 @@ Return ONLY valid JSON. No markdown, no explanations.`;
       });
 
       const rawResponse = response.choices[0]?.message?.content || '';
-      this.logger.debug(`GPT-4 response: ${rawResponse.substring(0, 200)}...`);
+      this.logger.debug(`GPT-5 response: ${rawResponse.substring(0, 200)}...`);
 
       // Parse JSON response
       let parsed;
@@ -400,7 +400,7 @@ Return ONLY valid JSON. No markdown, no explanations.`;
         const cleaned = rawResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         parsed = JSON.parse(cleaned);
       } catch (e) {
-        this.logger.error(`Failed to parse GPT-4 response as JSON: ${e.message}`);
+        this.logger.error(`Failed to parse GPT-5 response as JSON: ${e.message}`);
         return [];
       }
 
@@ -419,7 +419,7 @@ Return ONLY valid JSON. No markdown, no explanations.`;
         chain: g.chain || defaultChain,
       }));
     } catch (error) {
-      this.logger.error(`GPT-4 extraction error: ${error.message}`);
+      this.logger.error(`GPT-5 extraction error: ${error.message}`);
       return [];
     }
   }
