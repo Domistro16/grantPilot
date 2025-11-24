@@ -382,7 +382,6 @@ Return ONLY valid JSON. No markdown, no explanations.`;
     try {
       const response = await this.openai.responses.create({
         model: 'gpt-5-nano',
-        temperature: 0.3,
           max_output_tokens: 2000,
 
         input: [
