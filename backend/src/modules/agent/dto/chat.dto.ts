@@ -21,6 +21,10 @@ export class ChatRequestDto {
   @MaxLength(2000)
   user_message: string;
 
+  @IsNotEmpty()
+  @IsString()
+  wallet_address: string;
+
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

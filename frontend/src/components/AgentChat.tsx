@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { agentApi, Message } from "../api/agent";
 import { Grant } from "../data/grants";
+import { useTokenGate } from "../hooks/useTokenGate";
+import { TOKEN_GATE_CONFIG, formatTokenAmount } from "../config/tokenGate";
+import { Lock } from "lucide-react";
 
 interface AgentChatProps {
   grant: Grant | null;
 }
 
 export function AgentChat({ grant }: AgentChatProps) {
+  const { publicKey } = useWallet();
   const [messages, setMessages] = useState<(Message & { timestamp: Date })[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,6 +21,9 @@ export function AgentChat({ grant }: AgentChatProps) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Token gate check
+  const tokenGate = useTokenGate();
 
   const MAX_CHARS = 500;
 
@@ -39,6 +47,16 @@ export function AgentChat({ grant }: AgentChatProps) {
   const handleSend = async () => {
     if (!input.trim() || !grant || loading) return;
 
+    // Check token gate access
+    if (!tokenGate.hasAccess) {
+      setError(
+        tokenGate.isConnected
+          ? `You need at least ${formatTokenAmount(TOKEN_GATE_CONFIG.REQUIRED_AMOUNT)} ${TOKEN_GATE_CONFIG.TOKEN_NAME} to use the AI Agent.`
+          : 'Please connect your Solana wallet to use the AI Agent.'
+      );
+      return;
+    }
+
     const userMessage = input.trim();
     setInput("");
     setError(null);
@@ -54,10 +72,16 @@ export function AgentChat({ grant }: AgentChatProps) {
     try {
       setLoading(true);
 
+      // Ensure we have a wallet address
+      if (!publicKey) {
+        throw new Error('Wallet not connected');
+      }
+
       // Call agent API
       const response = await agentApi.chat({
         grant_id: grant.id,
         user_message: userMessage,
+        wallet_address: publicKey.toBase58(),
         conversation_history: messages.map(m => ({
           role: m.role,
           content: m.content,
@@ -119,6 +143,53 @@ export function AgentChat({ grant }: AgentChatProps) {
 
   return (
     <>
+      {/* Token Gate Status */}
+      {tokenGate.loading ? (
+        <div className="mb-3 bg-blue-500/10 border border-blue-500/30 rounded-xl px-3 py-2 text-[11px] text-blue-300 flex items-center gap-2">
+          <div className="animate-spin h-3 w-3 border-2 border-blue-400 border-t-transparent rounded-full" />
+          Checking token balance...
+        </div>
+      ) : !tokenGate.isConnected ? (
+        <div className="mb-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2.5">
+          <div className="flex items-start gap-2">
+            <Lock className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-[11px] text-amber-300 font-medium">Connect Wallet Required</p>
+              <p className="text-[10px] text-amber-200/80 mt-1">
+                Connect your Solana wallet to use the AI Agent for personalized grant assistance.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : !tokenGate.hasAccess ? (
+        <div className="mb-3 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2.5">
+          <div className="flex items-start gap-2">
+            <Lock className="h-4 w-4 text-rose-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-[11px] text-rose-300 font-medium">Insufficient Token Balance</p>
+              <p className="text-[10px] text-rose-200/80 mt-1">
+                You need at least <strong>{formatTokenAmount(TOKEN_GATE_CONFIG.REQUIRED_AMOUNT)}</strong> {TOKEN_GATE_CONFIG.TOKEN_NAME} to access the AI Agent.
+              </p>
+              <p className="text-[10px] text-rose-200/60 mt-1">
+                Your balance: <strong>{formatTokenAmount(tokenGate.balance)}</strong> {TOKEN_GATE_CONFIG.TOKEN_NAME}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 bg-emerald-400 rounded-full" />
+              <p className="text-[10px] text-emerald-300 font-medium">AI Agent Access Granted</p>
+            </div>
+            <p className="text-[10px] text-emerald-300/80">
+              Balance: {formatTokenAmount(tokenGate.balance)} {TOKEN_GATE_CONFIG.TOKEN_NAME}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Messages Container */}
       <div className="flex-1 rounded-xl border border-white/10 bg-black/40 p-3 space-y-3 text-[11px] text-gray-200 overflow-y-auto max-h-[50vh] lg:max-h-[60vh]">
         {messages.length === 0 ? (
@@ -134,18 +205,20 @@ export function AgentChat({ grant }: AgentChatProps) {
             </div>
 
             {/* Starter Prompts */}
-            <div className="space-y-2">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Quick starts:</p>
-              {starterPrompts.map((prompt, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleStarterClick(prompt)}
-                  className="w-full text-left bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-[11px] text-gray-300 transition"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
+            {tokenGate.hasAccess && (
+              <div className="space-y-2">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide">Quick starts:</p>
+                {starterPrompts.map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleStarterClick(prompt)}
+                    className="w-full text-left bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-[11px] text-gray-300 transition"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         ) : (
           <>
@@ -215,15 +288,22 @@ export function AgentChat({ grant }: AgentChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
             onKeyDown={handleKeyDown}
-            placeholder="Describe your project, ask for guidance, or paste your pitch..."
+            placeholder={
+              !tokenGate.hasAccess
+                ? tokenGate.isConnected
+                  ? `Insufficient ${TOKEN_GATE_CONFIG.TOKEN_NAME} balance to use AI Agent`
+                  : "Connect Solana wallet to use AI Agent"
+                : "Describe your project, ask for guidance, or paste your pitch..."
+            }
             className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-gray-500 resize-none min-h-[60px] max-h-[120px]"
             rows={3}
-            disabled={loading}
+            disabled={loading || !tokenGate.hasAccess}
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim() || loading}
+            disabled={!input.trim() || loading || !tokenGate.hasAccess}
             className="px-2.5 py-1.5 bg-amber-400 text-black rounded-xl text-[11px] font-medium hover:bg-amber-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            title={!tokenGate.hasAccess ? 'Token gate requirement not met' : ''}
           >
             {loading ? "..." : "Send"}
           </button>
