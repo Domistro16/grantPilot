@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
@@ -10,7 +9,6 @@ import {
   TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
-import { config } from '../config/wagmi';
 
 // Import Solana wallet adapter CSS
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -38,15 +36,13 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={config}>
-        <ConnectionProvider endpoint={endpoint}>
-          <SolanaWalletProvider wallets={wallets} autoConnect>
-            <WalletModalProvider>
-              {children}
-            </WalletModalProvider>
-          </SolanaWalletProvider>
-        </ConnectionProvider>
-      </WagmiProvider>
+      <ConnectionProvider endpoint={endpoint}>
+        <SolanaWalletProvider wallets={wallets} autoConnect>
+          <WalletModalProvider>
+            {children}
+          </WalletModalProvider>
+        </SolanaWalletProvider>
+      </ConnectionProvider>
     </QueryClientProvider>
   );
 }
