@@ -1,12 +1,17 @@
 import React from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 export function ConnectWallet() {
   const { publicKey: solanaAddress, connected: isSolanaConnected, disconnect } = useWallet();
+  const { setVisible } = useWalletModal();
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
+  };
+
+  const openConnectFlow = () => {
+    setVisible(true);
   };
 
   // Connected state - show Solana address
@@ -27,6 +32,11 @@ export function ConnectWallet() {
   }
 
   return (
-    <WalletMultiButton className="!px-6 !py-1.5 !bg-[#FFB000] !text-black !rounded-full hover:!bg-[#e6a000] !transition !font-semibold !text-xs" />
+    <button
+      onClick={openConnectFlow}
+      className="px-6 py-1.5 bg-[#FFB000] text-black rounded-full hover:bg-[#e6a000] transition font-semibold text-xs"
+    >
+      Connect Wallet
+    </button>
   );
 }
