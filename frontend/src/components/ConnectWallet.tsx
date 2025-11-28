@@ -111,90 +111,107 @@ export function ConnectWallet() {
       </button>
 
       {/* Connection Modal */}
-      {showModal && createPortal(
-        <div className="fixed inset-0 z-[999] flex items-start justify-center pt-32 bg-black/50 backdrop-blur-sm">
-          <div className="bg-[#0a0e27] border border-white/10 rounded-2xl w-full max-w-md p-6 relative">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {showModal &&
+        createPortal(
+          <div className="fixed inset-0 z-[999] flex items-start justify-center pt-32 bg-black/50 backdrop-blur-sm">
+            <div className="bg-[#0a0e27] border border-white/10 rounded-2xl w-full max-w-md p-6 relative">
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            <h2 className="text-xl font-bold text-white mb-2">Connect Wallets</h2>
-            <p className="text-sm text-gray-400 mb-6">
-              Connect both EVM and Solana wallets to use GrantPilot
-            </p>
+              <h2 className="text-xl font-bold text-white mb-2">
+                Connect Wallets
+              </h2>
+              <p className="text-sm text-gray-400 mb-6">
+                Connect both EVM and Solana wallets to use GrantPilot
+              </p>
 
-            {/* Progress Steps */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className={`flex-1 h-1 rounded ${step === 'evm' || step === 'solana' || step === 'connected' ? 'bg-[#FFB000]' : 'bg-gray-700'}`} />
-              <div className={`flex-1 h-1 rounded ${step === 'solana' || step === 'connected' ? 'bg-[#FFB000]' : 'bg-gray-700'}`} />
-            </div>
-
-            {/* Step 1: Connect EVM Wallet */}
-            {step === 'evm' && (
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  Step 1: Connect EVM Wallet
-                </h3>
-                <p className="text-sm text-gray-400 mb-4">
-                  Choose your EVM wallet (for BNB Chain, Ethereum, etc.)
-                </p>
-                <div className="space-y-2">
-                  {connectors.map((connector) => (
-                    <button
-                      key={connector.id}
-                      onClick={() => handleEvmConnect(connector.id)}
-                      className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white text-left transition"
-                    >
-                      {connector.name}
-                    </button>
-                  ))}
-                </div>
+              {/* Progress Steps */}
+              <div className="flex items-center gap-2 mb-6">
+                <div
+                  className={`flex-1 h-1 rounded ${
+                    step === "evm" || step === "solana" || step === "connected"
+                      ? "bg-[#FFB000]"
+                      : "bg-gray-700"
+                  }`}
+                />
+                <div
+                  className={`flex-1 h-1 rounded ${
+                    step === "solana" || step === "connected"
+                      ? "bg-[#FFB000]"
+                      : "bg-gray-700"
+                  }`}
+                />
               </div>
-            )}
 
-            {/* Step 2: Connect Solana Wallet */}
-            {step === 'solana' && (
-              <div>
-                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-                  <p className="text-sm text-emerald-300">
-                    ✓ EVM Wallet Connected:{' '}
-                    {safuLoading ? (
-                      <span className="inline-block animate-pulse">Loading name...</span>
-                    ) : safuName ? (
-                      <span className="font-semibold">{safuName}</span>
-                    ) : (
-                      evmAddress && formatAddress(evmAddress)
-                    )}
+              {/* Step 1: Connect EVM Wallet */}
+              {step === "evm" && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">
+                    Step 1: Connect EVM Wallet
+                  </h3>
+                  <p className="text-sm text-gray-400 mb-4">
+                    Choose your EVM wallet (for BNB Chain, Ethereum, etc.)
                   </p>
+                  <div className="space-y-2">
+                    {connectors.map((connector) => (
+                      <button
+                        key={connector.id}
+                        onClick={() => handleEvmConnect(connector.id)}
+                        className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white text-left transition"
+                      >
+                        {connector.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  Step 2: Connect Solana Wallet
-                </h3>
-                <p className="text-sm text-gray-400 mb-4">
-                  Choose your Solana wallet
-                </p>
-                <WalletMultiButton className="!w-full !bg-[#FFB000] !text-black !rounded-lg !py-3 !font-semibold hover:!bg-[#e6a000]" />
-              </div>
-            )}
+              )}
 
-            {/* Initial state fallback */}
-            {step === 'initial' && (
-              <div>
-                <button
-                  onClick={() => setStep('evm')}
-                  className="w-full px-4 py-3 bg-[#FFB000] text-black rounded-lg font-semibold hover:bg-[#e6a000] transition"
-                >
-                  Start Connection
-                </button>
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
+              {/* Step 2: Connect Solana Wallet */}
+              {step === "solana" && (
+                <div>
+                  <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                    <p className="text-sm text-emerald-300">
+                      ✓ EVM Wallet Connected:{" "}
+                      {safuLoading ? (
+                        <span className="inline-block animate-pulse">
+                          Loading name...
+                        </span>
+                      ) : safuName ? (
+                        <span className="font-semibold">{safuName}</span>
+                      ) : (
+                        evmAddress && formatAddress(evmAddress)
+                      )}
+                    </p>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-4">
+                    Step 2: Connect Solana Wallet
+                  </h3>
+                  <p className="text-sm text-gray-400 mb-4">
+                    Choose your Solana wallet
+                  </p>
+                  <WalletMultiButton className="!w-full !bg-[#FFB000] !text-black !rounded-lg !py-3 !font-semibold hover:!bg-[#e6a000]" />
+                </div>
+              )}
+
+              {/* Initial state fallback */}
+              {step === "initial" && (
+                <div>
+                  <button
+                    onClick={() => setStep("evm")}
+                    className="w-full px-4 py-3 bg-[#FFB000] text-black rounded-lg font-semibold hover:bg-[#e6a000] transition"
+                  >
+                    Start Connection
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }
