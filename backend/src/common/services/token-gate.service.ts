@@ -41,7 +41,7 @@ export class TokenGateService {
       // Check if this is WSOL (native SOL token)
       if (
         TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS ===
-        'So11111111111111111111111111111111111111112'
+        'FD37XbmN4NvmX8wn1upCyPYsZx6pVR5nbbhvzJnHBAGS'
       ) {
         // For WSOL, check native SOL balance
         balance = await this.connection.getBalance(publicKey);
