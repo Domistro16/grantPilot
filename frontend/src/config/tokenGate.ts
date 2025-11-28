@@ -10,14 +10,14 @@
 
 export const TOKEN_GATE_CONFIG = {
   // Token mint address (currently WSOL, will be LV Token)
-  TOKEN_MINT_ADDRESS: 'So11111111111111111111111111111111111111112' as const,
+  TOKEN_MINT_ADDRESS: 'FD37XbmN4NvmX8wn1upCyPYsZx6pVR5nbbhvzJnHBAGS' as const,
 
   // Minimum token amount required (in base units)
   // 0 WSOL for testing, will be 100000 LV Tokens when deployed
-  REQUIRED_AMOUNT: 0,
+  REQUIRED_AMOUNT: 100000,
 
   // Token display name
-  TOKEN_NAME: 'WSOL',
+  TOKEN_NAME: 'LVL',
 
   // Future config (uncomment when LV Token is deployed):
   // TOKEN_MINT_ADDRESS: 'YOUR_LV_TOKEN_MINT_ADDRESS',

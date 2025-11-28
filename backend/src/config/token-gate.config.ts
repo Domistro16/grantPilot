@@ -10,14 +10,14 @@
 
 export const TOKEN_GATE_CONFIG = {
   // Token mint address (currently WSOL, will be LV Token)
-  TOKEN_MINT_ADDRESS: 'So11111111111111111111111111111111111111112',
+  TOKEN_MINT_ADDRESS: 'FD37XbmN4NvmX8wn1upCyPYsZx6pVR5nbbhvzJnHBAGS',
 
   // Minimum token amount required (in base units/lamports)
   // 0 WSOL for testing, will be 100000 LV Tokens when deployed
-  REQUIRED_AMOUNT: 0,
+  REQUIRED_AMOUNT: 100000,
 
   // Token display name
-  TOKEN_NAME: 'WSOL',
+  TOKEN_NAME: 'LVL',
 
   // Solana RPC endpoint
   RPC_ENDPOINT: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
