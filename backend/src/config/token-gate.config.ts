@@ -11,13 +11,13 @@ export const TOKEN_GATE_CONFIG = {
 
   // Minimum token amount required (in base units)
   // Note: LVL has 0 decimals, so 100,000 base units = 100,000 tokens
-  REQUIRED_AMOUNT: 100000,
+  REQUIRED_AMOUNT: 100000000000000,
 
   // Token display name
   TOKEN_NAME: 'LVL',
 
   // Token decimals (LVL uses 0 decimals)
-  DECIMALS: 0,
+  DECIMALS: 9,
 
   // Solana RPC endpoint
   RPC_ENDPOINT: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
