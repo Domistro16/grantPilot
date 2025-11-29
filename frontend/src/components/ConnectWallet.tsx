@@ -36,7 +36,7 @@ export function ConnectWallet() {
       onClick={openConnectFlow}
       className="px-6 py-1.5 bg-[#FFB000] text-black rounded-full hover:bg-[#e6a000] transition font-semibold text-xs"
     >
-      Connect Wallet
+      Login
     </button>
   );
 }
