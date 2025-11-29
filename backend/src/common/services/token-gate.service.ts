@@ -38,45 +38,33 @@ export class TokenGateService {
 
       let balance = 0;
 
-      // Check if this is WSOL (native SOL token)
-      if (
-        TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS ===
-        'So11111111111111111111111111111111111111112'
-      ) {
-        // For WSOL, check native SOL balance
-        balance = await this.connection.getBalance(publicKey);
-        this.logger.debug(
-          `Checked SOL balance for ${walletAddress}: ${balance} lamports`,
-        );
-      } else {
-        // For SPL tokens (LVL), check token account
-        try {
-          const tokenMint = new PublicKey(TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS);
-          const tokenAccounts =
-            await this.connection.getParsedTokenAccountsByOwner(publicKey, {
-              mint: tokenMint,
-            });
+      // Check LVL token account balance
+      try {
+        const tokenMint = new PublicKey(TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS);
+        const tokenAccounts =
+          await this.connection.getParsedTokenAccountsByOwner(publicKey, {
+            mint: tokenMint,
+          });
 
-          if (tokenAccounts.value.length > 0) {
-            const tokenAccount = tokenAccounts.value[0];
-            const tokenAmount =
-              tokenAccount.account.data.parsed.info.tokenAmount;
-            balance = parseInt(tokenAmount.amount);
-            this.logger.debug(
-              `Checked ${TOKEN_GATE_CONFIG.TOKEN_NAME} balance for ${walletAddress}: ${balance} tokens`,
-            );
-          } else {
-            this.logger.debug(
-              `No token account found for ${walletAddress}, balance is 0`,
-            );
-          }
-        } catch (err) {
-          this.logger.warn(
-            `Error checking token account for ${walletAddress}: ${err.message}`,
+        if (tokenAccounts.value.length > 0) {
+          const tokenAccount = tokenAccounts.value[0];
+          const tokenAmount =
+            tokenAccount.account.data.parsed.info.tokenAmount;
+          balance = parseInt(tokenAmount.amount);
+          this.logger.debug(
+            `Checked ${TOKEN_GATE_CONFIG.TOKEN_NAME} balance for ${walletAddress}: ${balance} tokens`,
           );
-          // If token account doesn't exist, balance is 0
-          balance = 0;
+        } else {
+          this.logger.debug(
+            `No token account found for ${walletAddress}, balance is 0`,
+          );
         }
+      } catch (err) {
+        this.logger.warn(
+          `Error checking token account for ${walletAddress}: ${err.message}`,
+        );
+        // If token account doesn't exist, balance is 0
+        balance = 0;
       }
 
       const hasAccess = balance >= TOKEN_GATE_CONFIG.REQUIRED_AMOUNT;
