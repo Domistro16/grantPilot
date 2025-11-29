@@ -18,6 +18,15 @@ export interface ChatResponse {
   conversation_id?: string;
 }
 
+export interface TokenBalanceResponse {
+  balance: number;
+  hasAccess: boolean;
+  requiredAmount: number;
+  tokenName: string;
+  decimals: number;
+  error: string | null;
+}
+
 export const agentApi = {
   async chat(request: ChatRequest): Promise<ChatResponse> {
     const response = await fetch(`${API_BASE_URL}/agent/chat`, {
@@ -31,6 +40,25 @@ export const agentApi = {
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: response.statusText }));
       throw new Error(error.message || "Failed to get response from agent");
+    }
+
+    return response.json();
+  },
+
+  async getTokenBalance(walletAddress: string): Promise<TokenBalanceResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/agent/token-balance?wallet_address=${encodeURIComponent(walletAddress)}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(error.message || "Failed to fetch token balance");
     }
 
     return response.json();

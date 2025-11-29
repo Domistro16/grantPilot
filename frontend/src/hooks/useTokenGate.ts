@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
-import { TOKEN_GATE_CONFIG } from '../config/tokenGate';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { agentApi } from '../api/agent';
 
 interface TokenGateState {
   hasAccess: boolean;
@@ -14,12 +13,11 @@ interface TokenGateState {
 /**
  * Hook to check if user has required token balance for AI agent access
  *
- * Checks the user's Solana wallet for LVL token balance
+ * Fetches token balance from backend API
  * Returns access status and current balance
  */
 export function useTokenGate(): TokenGateState {
   const { publicKey, connected } = useWallet();
-  const { connection } = useConnection();
 
   const [state, setState] = useState<TokenGateState>({
     hasAccess: false,
@@ -46,70 +44,32 @@ export function useTokenGate(): TokenGateState {
       setState(prev => ({ ...prev, loading: true, error: null, isConnected: true }));
 
       try {
-        // Check LVL token account balance
-        const tokenMint = new PublicKey(TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS);
-        let balance = 0;
-        let actualDecimals = TOKEN_GATE_CONFIG.DECIMALS;
-
-        // First, get the actual decimals from the mint account
-        try {
-          const mintInfo = await connection.getParsedAccountInfo(tokenMint);
-          if (mintInfo.value && 'parsed' in mintInfo.value.data) {
-            actualDecimals = mintInfo.value.data.parsed.info.decimals;
-            console.log('[TokenGate] Token decimals from mint:', actualDecimals);
-            if (actualDecimals !== TOKEN_GATE_CONFIG.DECIMALS) {
-              console.warn('[TokenGate] WARNING: Decimals mismatch! Blockchain:', actualDecimals, 'Config:', TOKEN_GATE_CONFIG.DECIMALS);
-            }
-          }
-        } catch (err) {
-          console.warn('[TokenGate] Could not fetch mint info, using configured decimals');
-        }
-
-        // Then check user's token balance
-        try {
-          const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
-            mint: tokenMint,
-          });
-
-          if (tokenAccounts.value.length > 0) {
-            const tokenAccount = tokenAccounts.value[0];
-            const tokenAmount = tokenAccount.account.data.parsed.info.tokenAmount;
-            balance = parseInt(tokenAmount.amount); // Balance in base units
-          }
-        } catch (err) {
-          console.warn('Token account not found, balance is 0');
-          balance = 0;
-        }
-
-        const hasAccess = balance >= TOKEN_GATE_CONFIG.REQUIRED_AMOUNT;
+        // Fetch balance from backend API
+        const walletAddress = publicKey.toBase58();
+        const result = await agentApi.getTokenBalance(walletAddress);
 
         console.log('[TokenGate] Balance check result:', {
-          balance,
-          required: TOKEN_GATE_CONFIG.REQUIRED_AMOUNT,
-          hasAccess,
+          balance: result.balance,
+          required: result.requiredAmount,
+          hasAccess: result.hasAccess,
+          decimals: result.decimals,
         });
 
         setState({
-          hasAccess,
-          balance,
+          hasAccess: result.hasAccess,
+          balance: result.balance,
           loading: false,
-          error: null,
+          error: result.error,
           isConnected: true,
         });
       } catch (err) {
         console.error('Error checking token balance:', err);
 
-        // If required amount is 0, grant access even if balance check fails
-        const hasAccessOnError = TOKEN_GATE_CONFIG.REQUIRED_AMOUNT === 0;
-
-        console.warn('[TokenGate] Balance check failed, required amount is', TOKEN_GATE_CONFIG.REQUIRED_AMOUNT,
-                     'granting access:', hasAccessOnError);
-
         setState({
-          hasAccess: hasAccessOnError,
+          hasAccess: false,
           balance: 0,
           loading: false,
-          error: hasAccessOnError ? null : (err instanceof Error ? err.message : 'Failed to check token balance'),
+          error: err instanceof Error ? err.message : 'Failed to check token balance',
           isConnected: true,
         });
       }
@@ -123,7 +83,7 @@ export function useTokenGate(): TokenGateState {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [publicKey, connected, connection]);
+  }, [publicKey, connected]);
 
   return state;
 }
