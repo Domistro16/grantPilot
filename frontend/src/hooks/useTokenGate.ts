@@ -14,7 +14,7 @@ interface TokenGateState {
 /**
  * Hook to check if user has required token balance for AI agent access
  *
- * Checks the user's Solana wallet for WSOL (or LV Token when deployed)
+ * Checks the user's Solana wallet for LVL token balance
  * Returns access status and current balance
  */
 export function useTokenGate(): TokenGateState {
@@ -46,8 +46,8 @@ export function useTokenGate(): TokenGateState {
       setState(prev => ({ ...prev, loading: true, error: null, isConnected: true }));
 
       try {
-        // For WSOL, we can check native SOL balance (WSOL = wrapped SOL)
-        // When switching to LV Token, this will check the SPL token account
+        // Check token balance based on token type
+        // WSOL = native SOL balance, LVL/other SPL tokens = token account
         const tokenMint = new PublicKey(TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS);
 
         let balance = 0;
@@ -58,7 +58,7 @@ export function useTokenGate(): TokenGateState {
           const solBalance = await connection.getBalance(publicKey);
           balance = solBalance; // Balance in lamports
         } else {
-          // For other SPL tokens (future LV Token), check token account
+          // For SPL tokens (LVL), check token account
           try {
             const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
               mint: tokenMint,

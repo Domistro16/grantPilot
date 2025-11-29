@@ -41,7 +41,7 @@ export class TokenGateService {
       // Check if this is WSOL (native SOL token)
       if (
         TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS ===
-        'FD37XbmN4NvmX8wn1upCyPYsZx6pVR5nbbhvzJnHBAGS'
+        'So11111111111111111111111111111111111111112'
       ) {
         // For WSOL, check native SOL balance
         balance = await this.connection.getBalance(publicKey);
@@ -49,7 +49,7 @@ export class TokenGateService {
           `Checked SOL balance for ${walletAddress}: ${balance} lamports`,
         );
       } else {
-        // For other SPL tokens (future LV Token), check token account
+        // For SPL tokens (LVL), check token account
         try {
           const tokenMint = new PublicKey(TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS);
           const tokenAccounts =
