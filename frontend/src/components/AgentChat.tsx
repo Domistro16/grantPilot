@@ -279,9 +279,8 @@ export function AgentChat({ grant }: AgentChatProps) {
       {/* Input Area */}
       <div className="mt-3 bg-black/70 border border-white/10 rounded-2xl px-3 py-2">
         <div className="flex items-start gap-2">
-          <div className="h-7 w-7 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center text-black font-semibold text-[11px] flex-shrink-0 mt-0.5">
-            AI
-          </div>
+          <img src="/small.png" className="h-7 w-7 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center text-black font-semibold text-[11px] flex-shrink-0 mt-0.5" />
+        
           <textarea
             ref={inputRef}
             value={input}

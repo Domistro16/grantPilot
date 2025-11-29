@@ -372,7 +372,7 @@ export default function GrantPilotDashboard() {
         <header className="sticky top-0 z-30 bg-[#050816]/80 backdrop-blur border-b border-white/5 px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/40">
-              <Sparkles className="h-5 w-5" />
+              <img src="/small.png" className="h-5 w-5" />
             </div>
             <div>
               <h1 className="font-semibold text-lg">GrantPilot</h1>
