@@ -46,33 +46,23 @@ export function useTokenGate(): TokenGateState {
       setState(prev => ({ ...prev, loading: true, error: null, isConnected: true }));
 
       try {
-        // Check token balance based on token type
-        // WSOL = native SOL balance, LVL/other SPL tokens = token account
+        // Check LVL token account balance
         const tokenMint = new PublicKey(TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS);
-
         let balance = 0;
 
-        // Check if this is WSOL (native SOL token)
-        if (TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS === 'So11111111111111111111111111111111111111112') {
-          // For WSOL, check native SOL balance
-          const solBalance = await connection.getBalance(publicKey);
-          balance = solBalance; // Balance in lamports
-        } else {
-          // For SPL tokens (LVL), check token account
-          try {
-            const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
-              mint: tokenMint,
-            });
+        try {
+          const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
+            mint: tokenMint,
+          });
 
-            if (tokenAccounts.value.length > 0) {
-              const tokenAccount = tokenAccounts.value[0];
-              const tokenAmount = tokenAccount.account.data.parsed.info.tokenAmount;
-              balance = parseInt(tokenAmount.amount); // Balance in base units
-            }
-          } catch (err) {
-            console.warn('Token account not found, balance is 0');
-            balance = 0;
+          if (tokenAccounts.value.length > 0) {
+            const tokenAccount = tokenAccounts.value[0];
+            const tokenAmount = tokenAccount.account.data.parsed.info.tokenAmount;
+            balance = parseInt(tokenAmount.amount); // Balance in base units
           }
+        } catch (err) {
+          console.warn('Token account not found, balance is 0');
+          balance = 0;
         }
 
         const hasAccess = balance >= TOKEN_GATE_CONFIG.REQUIRED_AMOUNT;
