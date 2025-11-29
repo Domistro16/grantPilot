@@ -17,4 +17,4 @@ export const TOKEN_GATE_CONFIG = {
 
   // Solana RPC endpoint
   RPC_ENDPOINT: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-} as const;
+};

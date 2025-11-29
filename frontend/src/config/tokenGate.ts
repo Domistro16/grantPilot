@@ -7,14 +7,14 @@
 
 export const TOKEN_GATE_CONFIG = {
   // LVL token mint address
-  TOKEN_MINT_ADDRESS: 'FD37XbmN4NvmX8wn1upCyPYsZx6pVR5nbbhvzJnHBAGS' as const,
+  TOKEN_MINT_ADDRESS: 'FD37XbmN4NvmX8wn1upCyPYsZx6pVR5nbbhvzJnHBAGS',
 
   // Minimum token amount required (in base units)
   REQUIRED_AMOUNT: 100000,
 
   // Token display name
   TOKEN_NAME: 'LVL',
-} as const;
+};
 
 /**
  * Format token amount for display
