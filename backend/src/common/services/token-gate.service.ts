@@ -51,8 +51,16 @@ export class TokenGateService {
           const tokenAmount =
             tokenAccount.account.data.parsed.info.tokenAmount;
           balance = parseInt(tokenAmount.amount);
+
+          // Verify token decimals match configuration
+          if (tokenAmount.decimals !== TOKEN_GATE_CONFIG.DECIMALS) {
+            this.logger.warn(
+              `Decimals mismatch! Blockchain: ${tokenAmount.decimals}, Config: ${TOKEN_GATE_CONFIG.DECIMALS}`,
+            );
+          }
+
           this.logger.debug(
-            `Checked ${TOKEN_GATE_CONFIG.TOKEN_NAME} balance for ${walletAddress}: ${balance} tokens`,
+            `Checked ${TOKEN_GATE_CONFIG.TOKEN_NAME} balance for ${walletAddress}: ${balance} tokens (decimals: ${tokenAmount.decimals})`,
           );
         } else {
           this.logger.debug(

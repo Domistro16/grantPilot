@@ -49,7 +49,23 @@ export function useTokenGate(): TokenGateState {
         // Check LVL token account balance
         const tokenMint = new PublicKey(TOKEN_GATE_CONFIG.TOKEN_MINT_ADDRESS);
         let balance = 0;
+        let actualDecimals = TOKEN_GATE_CONFIG.DECIMALS;
 
+        // First, get the actual decimals from the mint account
+        try {
+          const mintInfo = await connection.getParsedAccountInfo(tokenMint);
+          if (mintInfo.value && 'parsed' in mintInfo.value.data) {
+            actualDecimals = mintInfo.value.data.parsed.info.decimals;
+            console.log('[TokenGate] Token decimals from mint:', actualDecimals);
+            if (actualDecimals !== TOKEN_GATE_CONFIG.DECIMALS) {
+              console.warn('[TokenGate] WARNING: Decimals mismatch! Blockchain:', actualDecimals, 'Config:', TOKEN_GATE_CONFIG.DECIMALS);
+            }
+          }
+        } catch (err) {
+          console.warn('[TokenGate] Could not fetch mint info, using configured decimals');
+        }
+
+        // Then check user's token balance
         try {
           const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
             mint: tokenMint,
